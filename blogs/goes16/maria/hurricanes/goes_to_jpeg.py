@@ -20,17 +20,11 @@ def list_gcs(bucket, gcs_prefix, gcs_patterns):
    bucket = gcs.Client().get_bucket(bucket)
    blobs = bucket.list_blobs(prefix=gcs_prefix, delimiter='/')
    result = []
-   if gcs_patterns == None or len(gcs_patterns) == 0:
-      for b in blobs:
-          result.append(b)
-   else:
-      for b in blobs:
-          match = True
-          for pattern in gcs_patterns:
-              if not pattern in b.path:
-                 match = False
-          if match:
-              result.append(b)
+   for b in blobs:
+      if gcs_patterns is None or len(gcs_patterns) == 0:
+         result.append(b)
+      elif match := all(pattern in b.path for pattern in gcs_patterns):
+         result.append(b)
    return result
 
 def copy_fromgcs(bucket, objectId, destdir):
@@ -132,57 +126,55 @@ def get_objectId_at(dt, product='ABI-L1b-RadF', channel='C14'):
       return None
 
 def parse_timestamp(timestamp):
-    from datetime import datetime
-    dt = datetime.strptime(timestamp[:19], '%Y-%m-%d %H:%M:%S')
-    return dt
+   from datetime import datetime
+   return datetime.strptime(timestamp[:19], '%Y-%m-%d %H:%M:%S')
 
 def parse_line(line):
     fields = line.split(',')
     return parse_timestamp(fields[6]), float(fields[8]), float(fields[9])
 
 def goes_to_jpeg(objectId, lat, lon, outbucket, outfilename):
-    import os, shutil, tempfile, subprocess, logging
-    import os.path
+   import os, shutil, tempfile, subprocess, logging
+   import os.path
 
     # if get_objectId_at fails, it returns None
-    if objectId == None:
-        logging.error('Skipping GOES object creation since no GCS file specified')
-        return
+   if objectId is None:
+      logging.error('Skipping GOES object creation since no GCS file specified')
+      return
 
 
-    tmpdir = tempfile.mkdtemp()
-    local_file = copy_fromgcs('gcp-public-data-goes-16', objectId, tmpdir)
-    logging.info('Creating image from {} near {},{}'.format(os.path.basename(local_file), lat, lon))
+   tmpdir = tempfile.mkdtemp()
+   local_file = copy_fromgcs('gcp-public-data-goes-16', objectId, tmpdir)
+   logging.info('Creating image from {} near {},{}'.format(os.path.basename(local_file), lat, lon))
 
-    # create image in temporary dir, then move over
-    jpgfile = os.path.join(tmpdir, os.path.basename(outfilename))
-    jpgfile = plot_image(local_file, jpgfile, lat, lon)
-    logging.info('Created {} from {}'.format(os.path.basename(jpgfile), os.path.basename(local_file)))
+   # create image in temporary dir, then move over
+   jpgfile = os.path.join(tmpdir, os.path.basename(outfilename))
+   jpgfile = plot_image(local_file, jpgfile, lat, lon)
+   logging.info('Created {} from {}'.format(os.path.basename(jpgfile), os.path.basename(local_file)))
 
     # move over
-    if outbucket != None:
-        copy_togcs(jpgfile, outbucket, outfilename)
-        outfilename = 'gs://{}/{}'.format(outbucket, outfilename)
-    else:
-        subprocess.check_call(['mv', jpgfile, outfilename])
+   if outbucket is None:
+      subprocess.check_call(['mv', jpgfile, outfilename])
 
-    # cleanup
-    shutil.rmtree(tmpdir)
-    logging.info('Created {} from {}'.format(outfilename, os.path.basename(local_file)))
+   else:
+      copy_togcs(jpgfile, outbucket, outfilename)
+      outfilename = 'gs://{}/{}'.format(outbucket, outfilename)
+   # cleanup
+   shutil.rmtree(tmpdir)
+   logging.info('Created {} from {}'.format(outfilename, os.path.basename(local_file)))
 
-    return outfilename
+   return outfilename
 
 
 def only_infrared(message):
-  import json, logging
-  try:
-    # message is a string in json format, so we need to parse it as json
-    #logging.debug(message)
-    result = json.loads(message)
-    # e.g. ABI-L2-CMIPF/2017/306/21/OR_ABI-L2-CMIPF-M4C01_G16_s20173062105222_e20173062110023_c20173062110102.nc
-    if 'C14_G16' in result['name']:
-        yield result['name'] #filename
-  except:
-    import sys
-    logging.warn(sys.exc_info()[0])
-    pass
+   import json, logging
+   try:
+      # message is a string in json format, so we need to parse it as json
+      #logging.debug(message)
+      result = json.loads(message)
+      # e.g. ABI-L2-CMIPF/2017/306/21/OR_ABI-L2-CMIPF-M4C01_G16_s20173062105222_e20173062110023_c20173062110102.nc
+      if 'C14_G16' in result['name']:
+          yield result['name'] #filename
+   except:
+      import sys
+      logging.warn(sys.exc_info()[0])

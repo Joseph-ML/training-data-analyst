@@ -46,13 +46,13 @@ def _get_project_id():
 # Constants
 # Get project ID and GCS bucket
 PROJECT_ID = _get_project_id()
-BUCKET = "gs://" + PROJECT_ID + "-bucket"
+BUCKET = f'gs://{PROJECT_ID}-bucket'
 
 # Specify your source BigQuery dataset and table names
 SOURCE_DATASET_TABLE_NAMES = "yellow.trips,green.trips_2014,green.trips_2015".split(",")
 
 # Where to write out data in GCS
-DATA_DIR = BUCKET + "/taxifare/data/"
+DATA_DIR = f'{BUCKET}/taxifare/data/'
 
 # Base model parameters
 MODEL_NAME = "taxifare_"
@@ -108,7 +108,7 @@ for model in SOURCE_DATASET_TABLE_NAMES:
         DATA_DIR),
     dag=dag
   )
-  
+
   subdag_training_op = SubDagOperator(
     task_id="subdag_training_{}_task".format(model.replace(".","_")),
     subdag=training.training_tasks(
@@ -124,7 +124,7 @@ for model in SOURCE_DATASET_TABLE_NAMES:
         MODEL_LOCATION),
     dag=dag
   )
-  
+
   subdag_deploy_op = SubDagOperator(
     task_id="subdag_deploy_{}_task".format(model.replace(".","_")),
     subdag=deploy.deploy_tasks(

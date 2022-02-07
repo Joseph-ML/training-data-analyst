@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 
+
 import os
 import sys
 import pickle
@@ -52,14 +53,14 @@ print("trained ...")
 
 # use this model to predict what the user would rate accommodations that she has not rated
 allPredictions = None
-for USER_ID in range(0, 100):
+for USER_ID in range(100):
   dfUserRatings = dfRates.filter(dfRates.userId == USER_ID).rdd.map(lambda r: r.accoId).collect()
   rddPotential  = dfAccos.rdd.filter(lambda x: x[0] not in dfUserRatings)
   pairsPotential = rddPotential.map(lambda x: (USER_ID, x[0]))
   predictions = model.predictAll(pairsPotential).map(lambda p: (str(p[0]), str(p[1]), float(p[2])))
   predictions = predictions.takeOrdered(5, key=lambda x: -x[2]) # top 5
   print(("predicted for user={0}".format(USER_ID)))
-  if (allPredictions == None):
+  if allPredictions is None:
     allPredictions = predictions
   else:
     allPredictions.extend(predictions)

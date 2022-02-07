@@ -104,9 +104,8 @@ def _run(args):
 
         next_state, reward, done, info = env.step(action)
         Buffer.add_exp([state, next_state, reward, action, done])
-        ready_to_update_model = curr_step > args[0].start_train and len(
-            Buffer.buffer) > Buffer.min_size
-        if ready_to_update_model:
+        if (ready_to_update_model := curr_step > args[0].start_train
+            and len(Buffer.buffer) > Buffer.min_size):
           exp_state, exp_next_state, exp_reward, exp_action, exp_done = Buffer.sample_experiences(
               args[0].batch_size)
           agent.batch_train(exp_state, exp_next_state, exp_reward, exp_action,
@@ -118,7 +117,8 @@ def _run(args):
             print('SAVING MODEL AT STEP: ', curr_step)
             models.save_model(
                 agent.model,
-                model_dir + 'model_' + str(episode_number) + '_.h5')
+                f'{model_dir}model_' + str(episode_number) + '_.h5',
+            )
         #Resets state
         if done or args[0].mode != 'Train':
           episode_number += 1

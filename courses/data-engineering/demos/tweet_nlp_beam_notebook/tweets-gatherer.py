@@ -69,9 +69,7 @@ SEARCH_TERM = args.search_term
 Define a function to publish to the Pub/Sub topic.
 """
 def publish(client, pubsub_topic, data_lines):
-    messages = []
-    for line in data_lines:
-        messages.append({'data': line})
+    messages = [{'data': line} for line in data_lines]
     body = {'messages': messages}
     str_body = json.dumps(body, ensure_ascii=False) # Encode the data from Twitter API as a JSON object.
     data = str_body.encode(encoding='UTF-8') # Encode the JSON object using UTF-8.

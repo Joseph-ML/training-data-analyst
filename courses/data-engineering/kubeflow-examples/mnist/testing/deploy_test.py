@@ -58,10 +58,28 @@ def test_deploy(record_xml_attribute, deploy_name, namespace, model_dir, export_
   util.run(['kustomize', 'edit', 'add', 'configmap', configmap,
            '--from-literal=name' + '=' + deploy_name], cwd=app_dir)
 
-  util.run(['kustomize', 'edit', 'add', 'configmap', configmap,
-            '--from-literal=modelBasePath=' + model_dir], cwd=app_dir)
-  util.run(['kustomize', 'edit', 'add', 'configmap', configmap,
-            '--from-literal=exportDir=' + export_dir], cwd=app_dir)
+  util.run(
+      [
+          'kustomize',
+          'edit',
+          'add',
+          'configmap',
+          configmap,
+          f'--from-literal=modelBasePath={model_dir}',
+      ],
+      cwd=app_dir,
+  )
+  util.run(
+      [
+          'kustomize',
+          'edit',
+          'add',
+          'configmap',
+          configmap,
+          f'--from-literal=exportDir={export_dir}',
+      ],
+      cwd=app_dir,
+  )
 
   # Apply the components
   util.run(['kustomize', 'build', app_dir, '-o', 'generated.yaml'], cwd=app_dir)

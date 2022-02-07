@@ -132,13 +132,9 @@ def pca_reconstruction_k_pc(X_cen, pca_eigvec_var, k_pc):
       b=pca_eigvec_var[:, -k_pc:],
       transpose_b=True)
 
-  # time_shape = (cur_batch_size * seq_len, num_feat)
-  # feat_shape = (cur_batch_size * num_feat, seq_len)
-  X_cen_recon = tf.matmul(
+  return tf.matmul(
       a=X_cen,
       b=projection_matrix)
-
-  return X_cen_recon
 
 
 def pca_reconstruction_k_pc_mse(X_cen, pca_eigvec_var, k_pc):
@@ -165,12 +161,9 @@ def pca_reconstruction_k_pc_mse(X_cen, pca_eigvec_var, k_pc):
   # feat_shape = (cur_batch_size * num_feat, seq_len)
   error = X_cen - X_cen_recon
 
-  # shape = ()
-  mse = tf.reduce_mean(
+  return tf.reduce_mean(
       input_tensor=tf.reduce_sum(
           input_tensor=tf.square(x=error), axis=-1))
-
-  return mse
 
 
 def find_best_k_principal_components(X_recon_mse, pca_k_pc_var):

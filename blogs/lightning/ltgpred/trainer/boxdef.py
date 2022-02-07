@@ -37,11 +37,10 @@ class BoxDef(object):
   def rawdata_input_fn(self, ref, ltg, griddef, ltgfcst = None):
     """Input function that yields example dicts for each box in grid."""
     for cy, cx in self.get_prediction_grid_centers(ref):
-      # restrict to grids where there is currently lightning in the area
-      interesting = np.sum(
-        ltg[cy - self.train_patch_radius:cy + self.train_patch_radius + 1,
-            cx - self.train_patch_radius:cx + self.train_patch_radius + 1]) > 0.5
-      if interesting:
+      if (interesting := np.sum(
+          ltg[cy - self.train_patch_radius:cy + self.train_patch_radius + 1, cx -
+              self.train_patch_radius:cx + self.train_patch_radius + 1, ]) >
+          0.5):
         label = (np.sum(
                   ltgfcst[cy - self.label_patch_radius:cy + self.label_patch_radius + 1,
                           cx - self.label_patch_radius:cx + self.label_patch_radius + 1])

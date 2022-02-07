@@ -23,23 +23,10 @@ uploads file into google cloud storage
 - return public_url
 """
 def upload_file(image_file, public):
-    if not image_file:
-        return None
-
-    # TODO: Use the storage client to Upload the file
-    # The second argument is a boolean
-
-    public_url = storage.upload_file(
+    return None if not image_file else storage.upload_file(
        image_file, 
        public
     )
-
-    # END TODO
-
-    # TODO: Return the public URL
-    # for the object
-
-    return public_url
 
     # END TODO
 
@@ -53,11 +40,10 @@ def save_question(data, image_file):
     # TODO: If there is an image file, then upload it
     # And assign the result to a new Datastore property imageUrl
     # If there isn't, assign an empty string
-    
-    if image_file:
-        data['imageUrl'] = unicode(upload_file(image_file, True))
-    else:
-        data['imageUrl'] = u''
+
+    data['imageUrl'] = (
+        unicode(upload_file(image_file, True)) if image_file else u''
+    )
 
     # END TODO
 

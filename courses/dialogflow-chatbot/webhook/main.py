@@ -73,7 +73,7 @@ def getActionText(synonym_text):
     for topic in topics:
         action_text = topic.action_text
 
-    if action_text == None or action_text == "":
+    if action_text is None or action_text == "":
         return ""
 
     return action_text

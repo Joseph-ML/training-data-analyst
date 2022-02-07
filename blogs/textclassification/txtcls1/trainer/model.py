@@ -110,56 +110,56 @@ def read_dataset(prefix):
 # CNN model parameters
 EMBEDDING_SIZE = 10
 WINDOW_SIZE = EMBEDDING_SIZE
-STRIDE = int(WINDOW_SIZE/2)
+STRIDE = WINDOW_SIZE // 2
 def cnn_model(features, target, mode):
-    table = lookup.index_table_from_file(vocabulary_file=WORD_VOCAB_FILE, num_oov_buckets=1, default_value=-1)
-    
-    # string operations
-    titles = tf.squeeze(features['title'], [1])
-    words = tf.string_split(titles)
-    densewords = tf.sparse_tensor_to_dense(words, default_value=PADWORD)
-    numbers = table.lookup(densewords)
-    padding = tf.constant([[0,0],[0,MAX_DOCUMENT_LENGTH]])
-    padded = tf.pad(numbers, padding)
-    sliced = tf.slice(padded, [0,0], [-1, MAX_DOCUMENT_LENGTH])
-    print('words_sliced={}'.format(words))  # (?, 20)
+  table = lookup.index_table_from_file(vocabulary_file=WORD_VOCAB_FILE, num_oov_buckets=1, default_value=-1)
 
-    # layer to take the words and convert them into vectors (embeddings)
-    embeds = tf.contrib.layers.embed_sequence(sliced, vocab_size=N_WORDS, embed_dim=EMBEDDING_SIZE)
-    print('words_embed={}'.format(embeds)) # (?, 20, 10)
-    
-    # now do convolution
-    conv = tf.contrib.layers.conv2d(embeds, 1, WINDOW_SIZE, stride=STRIDE, padding='SAME') # (?, 4, 1)
-    conv = tf.nn.relu(conv) # (?, 4, 1)
-    words = tf.squeeze(conv, [2]) # (?, 4)
-    print('words_conv={}'.format(words)) # (?, 4)
+  # string operations
+  titles = tf.squeeze(features['title'], [1])
+  words = tf.string_split(titles)
+  densewords = tf.sparse_tensor_to_dense(words, default_value=PADWORD)
+  numbers = table.lookup(densewords)
+  padding = tf.constant([[0,0],[0,MAX_DOCUMENT_LENGTH]])
+  padded = tf.pad(numbers, padding)
+  sliced = tf.slice(padded, [0,0], [-1, MAX_DOCUMENT_LENGTH])
+  print('words_sliced={}'.format(words))  # (?, 20)
 
-    n_classes = len(TARGETS)
+  # layer to take the words and convert them into vectors (embeddings)
+  embeds = tf.contrib.layers.embed_sequence(sliced, vocab_size=N_WORDS, embed_dim=EMBEDDING_SIZE)
+  print('words_embed={}'.format(embeds)) # (?, 20, 10)
 
-    logits = tf.contrib.layers.fully_connected(words, n_classes, activation_fn=None)
-    #print('logits={}'.format(logits)) # (?, 3)
-    predictions_dict = {
-      'source': tf.gather(TARGETS, tf.argmax(logits, 1)),
-      'class': tf.argmax(logits, 1),
-      'prob': tf.nn.softmax(logits)
-    }
+  # now do convolution
+  conv = tf.contrib.layers.conv2d(embeds, 1, WINDOW_SIZE, stride=STRIDE, padding='SAME') # (?, 4, 1)
+  conv = tf.nn.relu(conv) # (?, 4, 1)
+  words = tf.squeeze(conv, [2]) # (?, 4)
+  print('words_conv={}'.format(words)) # (?, 4)
 
-    if mode == tf.contrib.learn.ModeKeys.TRAIN or mode == tf.contrib.learn.ModeKeys.EVAL:
-       loss = tf.losses.sparse_softmax_cross_entropy(target, logits)
-       train_op = tf.contrib.layers.optimize_loss(
-         loss,
-         tf.contrib.framework.get_global_step(),
-         optimizer='Adam',
-         learning_rate=0.01)
-    else:
-       loss = None
-       train_op = None
+  n_classes = len(TARGETS)
 
-    return tflearn.ModelFnOps(
-      mode=mode,
-      predictions=predictions_dict,
-      loss=loss,
-      train_op=train_op)
+  logits = tf.contrib.layers.fully_connected(words, n_classes, activation_fn=None)
+  #print('logits={}'.format(logits)) # (?, 3)
+  predictions_dict = {
+    'source': tf.gather(TARGETS, tf.argmax(logits, 1)),
+    'class': tf.argmax(logits, 1),
+    'prob': tf.nn.softmax(logits)
+  }
+
+  if mode in [tf.contrib.learn.ModeKeys.TRAIN, tf.contrib.learn.ModeKeys.EVAL]:
+    loss = tf.losses.sparse_softmax_cross_entropy(target, logits)
+    train_op = tf.contrib.layers.optimize_loss(
+      loss,
+      tf.contrib.framework.get_global_step(),
+      optimizer='Adam',
+      learning_rate=0.01)
+  else:
+    loss = None
+    train_op = None
+
+  return tflearn.ModelFnOps(
+    mode=mode,
+    predictions=predictions_dict,
+    loss=loss,
+    train_op=train_op)
 
 
 def serving_input_fn():

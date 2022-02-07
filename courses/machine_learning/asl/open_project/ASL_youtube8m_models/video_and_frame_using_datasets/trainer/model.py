@@ -230,7 +230,7 @@ def video_and_frame_level_model(features, labels, mode, params):
     for units in params['video_hidden_units']:
         video_network = tf.layers.dense(inputs = video_network, units = units, activation = tf.nn.relu) # shape = (current_batch_size, units)
         print("video_and_frame_level_model: video_network = {}, units = {}".format(video_network, units))
-    
+
     # Connect the final hidden layer to a dense layer with no activation to get a video logit for each class
     video_logits = tf.layers.dense(inputs = video_network, units = NUM_CLASSES, activation = None) # shape = (current_batch_size, NUM_CLASSES)
     print("video_and_frame_level_model: video_logits = {}".format(video_logits))
@@ -258,7 +258,7 @@ def video_and_frame_level_model(features, labels, mode, params):
     for units in params['frame_hidden_units']:
         frame_network = tf.layers.dense(inputs = frame_network, units = units, activation = tf.nn.relu) # shape = (current_batch_size * MAX_FRAMES, units)
         print("video_and_frame_level_model: frame_network = {}, units = {}".format(frame_network, units))
-      
+
     # Connect the final hidden layer to a dense layer with no activation to get a frame logit for each class
     frame_logits = tf.layers.dense(inputs = frame_network, units = NUM_CLASSES, activation = None) # shape = (current_batch_size * MAX_FRAMES, NUM_CLASSES)
     print("video_and_frame_level_model: frame_logits = {}".format(frame_logits))
@@ -313,8 +313,8 @@ def video_and_frame_level_model(features, labels, mode, params):
         y = tf.zeros_like(tensor = top_k_probabilities.values, dtype = tf.float32))
     print("video_and_frame_level_model: top_k_predictions = {}\n".format(top_k_predictions))
 
-    # 2. Loss function, training/eval ops 
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    # 2. Loss function, training/eval ops
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         # Since this is a multi-class, multi-label problem, we will use sigmoid activation and cross entropy loss
         # We already have the probabilities we can use the cross entropy formula directly to calculate the loss
         loss = tf.reduce_mean(input_tensor = -tf.reduce_sum(input_tensor = labels * tf.log(x = average_probabilities_over_frames + 0.00000001), axis = 1))

@@ -79,16 +79,11 @@ def list_gcs_paths(bucket, gcs_prefix, gcs_patterns=None):
   bucket = cached_gcs_client().get_bucket(bucket)
   blobs = bucket.list_blobs(prefix=gcs_prefix, delimiter='/')
   result = []
-  if gcs_patterns:
-    for b in blobs:
-      match = True
-      for pattern in gcs_patterns:
-        if pattern not in b.path:
-          match = False
-      if match:
+  for b in blobs:
+    if gcs_patterns:
+      if match := all(pattern in b.path for pattern in gcs_patterns):
         result.append(b.path)
-  else:
-    for b in blobs:
+    else:
       result.append(b.path)
   return result
 
@@ -178,22 +173,20 @@ def create_data_grid(nc, data, griddef):
 
 
 def parse_cmdline_timestamp(timestamp):
-  dt = datetime.strptime(timestamp[:19], '%Y-%m-%d %H:%M:%S')
-  return dt
+  return datetime.strptime(timestamp[:19], '%Y-%m-%d %H:%M:%S')
 
 
 def get_timestamp_from_filename(filename):
   pieces = filename.split('_')
   for p in pieces:
-    if len(p) > 13 and p[0:2] == 's2':
+    if len(p) > 13 and p[:2] == 's2':
       return datetime.strptime(p[1:14], '%Y%j%H%M%S')
 
 
 def get_ir_blob_paths(year, day, hour, channel='C14'):
-  ir_blob_paths = list_gcs_paths(
+  return list_gcs_paths(
       GOES_PUBLIC_BUCKET, 'ABI-L1b-RadC/{}/{:03d}/{:02d}/'.format(
           year, day, hour), channel)
-  return ir_blob_paths
 
 
 def read_ir_data(blob_path, griddef):
@@ -299,16 +292,13 @@ def create_ltg_grid(ltg_blob_paths, griddef, event_influence_km):
     data = np.append(data, np.ones_like(event_lat))
   swath_def = pr.geometry.SwathDefinition(lats=ltg_lats, lons=ltg_lons)
 
-  # resample these points to a grid
-  result = pr.kd_tree.resample_nearest(
+  return pr.kd_tree.resample_nearest(
       swath_def,
       data,
       griddef,
       radius_of_influence=1000 * event_influence_km,
       epsilon=0.5,
       fill_value=0)
-
-  return result
 
 
 if __name__ == '__main__':

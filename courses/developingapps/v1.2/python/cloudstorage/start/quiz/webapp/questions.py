@@ -23,20 +23,7 @@ uploads file into google cloud storage
 - return public_url
 """
 def upload_file(image_file, public):
-    if not image_file:
-        return None
-
-    # TODO: Use the storage client to Upload the file
-    # The second argument is a boolean
-
-    
-
-    # END TODO
-
-    # TODO: Return the public URL
-    # for the object
-
-    return u''
+    return None if not image_file else u''
 
     # END TODO
 

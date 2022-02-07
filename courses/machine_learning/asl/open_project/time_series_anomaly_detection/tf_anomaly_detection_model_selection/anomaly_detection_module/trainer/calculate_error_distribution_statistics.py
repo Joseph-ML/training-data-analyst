@@ -36,9 +36,7 @@ def update_mean_incremental(count_a, mean_a, value_b):
   """
   umean_a = mean_a * tf.cast(x=count_a, dtype=tf.float64)
   mean_ab_num = umean_a + tf.squeeze(input=value_b, axis=0)
-  mean_ab = mean_ab_num / tf.cast(x=count_a + 1, dtype=tf.float64)
-
-  return mean_ab
+  return mean_ab_num / tf.cast(x=count_a + 1, dtype=tf.float64)
 
 
 # This function updates the covariance matrix incrementally
@@ -66,12 +64,10 @@ def update_cov_incremental(
 
   if sample_cov:
     ucov_a = cov_a * tf.cast(x=count_a - 1, dtype=tf.float64)
-    cov_ab = (ucov_a + mean_diff) / tf.cast(x=count_a, dtype=tf.float64)
+    return (ucov_a + mean_diff) / tf.cast(x=count_a, dtype=tf.float64)
   else:
     ucov_a = cov_a * tf.cast(x=count_a, dtype=tf.float64)
-    cov_ab = (ucov_a + mean_diff) / tf.cast(x=count_a + 1, dtype=tf.float64)
-
-  return cov_ab
+    return (ucov_a + mean_diff) / tf.cast(x=count_a + 1, dtype=tf.float64)
 
 
 def singleton_batch_cov_variable_updating(
@@ -216,9 +212,7 @@ def update_mean_batch(count_a, mean_a, count_b, mean_b):
   """
   sum_a = mean_a * tf.cast(x=count_a, dtype=tf.float64)
   sum_b = mean_b * tf.cast(x=count_b, dtype=tf.float64)
-  mean_ab = (sum_a + sum_b) / tf.cast(x=count_a + count_b, dtype=tf.float64)
-
-  return mean_ab
+  return (sum_a + sum_b) / tf.cast(x=count_a + count_b, dtype=tf.float64)
 
 
 def update_cov_batch(
@@ -256,9 +250,7 @@ def update_cov_batch(
   mean_scaling_num = tf.cast(x=count_a * count_b, dtype=tf.float64)
   mean_scaling_den = tf.cast(x=count_a + count_b, dtype=tf.float64)
   mean_scaling = mean_scaling_num / mean_scaling_den
-  cov_ab = (ucov_a + ucov_b + mean_diff * mean_scaling) / den
-
-  return cov_ab
+  return (ucov_a + ucov_b + mean_diff * mean_scaling) / den
 
 
 def non_singleton_batch_cov_variable_updating(
@@ -463,11 +455,7 @@ def mahalanobis_dist(err_vec, mean_vec, inv_cov, final_shape):
   mahalanobis_dist_final_shaped = tf.reshape(
       tensor=mahalanobis_dist_flat, shape=[-1, final_shape])
 
-  # time_shape = (cur_batch_size, seq_len)
-  # features_shape = (cur_batch_size, num_feat)
-  mahalanobis_dist_final_shaped_sqrt = tf.sqrt(x=mahalanobis_dist_final_shaped)
-
-  return mahalanobis_dist_final_shaped_sqrt
+  return tf.sqrt(x=mahalanobis_dist_final_shaped)
 
 
 def calculate_error_distribution_statistics_training(

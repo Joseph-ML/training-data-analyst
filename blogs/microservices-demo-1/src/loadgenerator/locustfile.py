@@ -44,7 +44,7 @@ def viewCart(l):
 
 def addToCart(l):
     product = random.choice(products)
-    l.client.get("/product/" + product)
+    l.client.get(f'/product/{product}')
     l.client.post("/cart", {
         'product_id': product,
         'quantity': random.choice([1,2,3,4,5,10])})

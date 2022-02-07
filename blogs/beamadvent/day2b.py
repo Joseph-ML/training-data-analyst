@@ -69,7 +69,7 @@ if __name__ == '__main__':
    parser = argparse.ArgumentParser(description='Solutions to https://adventofcode.com/2019/ using Apache Beam')
    parser.add_argument('--input', required=True, help='Specify input file')
    parser.add_argument('--output', required=True, help='Specify output file')
-   
+
    options = parser.parse_args()
    runner = 'DirectRunner' # run Beam on local machine, but write outputs to cloud
    logging.basicConfig(level=getattr(logging, 'INFO', None))
@@ -78,7 +78,7 @@ if __name__ == '__main__':
      intcode = ifp.read()
    print(intcode)
 
-   nouns_and_verbs = [(x,[y for y in range(0,99)]) for x in range(0,99)]
+   nouns_and_verbs = [(x, list(range(99))) for x in range(99)]
 
    opts = beam.pipeline.PipelineOptions(flags=[])
    p = beam.Pipeline(runner, options=opts)

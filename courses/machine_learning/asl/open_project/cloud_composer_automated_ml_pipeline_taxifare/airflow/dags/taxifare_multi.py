@@ -58,12 +58,12 @@ SOURCE_DATASET_TABLE_NAMES = "yellow.trips,green.trips_2014,green.trips_2015".sp
 DESTINATION_DATASET = "taxifare"
 
 # GCS bucket names and region, can also be changed.
-BUCKET = "gs://" + PROJECT_ID + "-bucket"
+BUCKET = f'gs://{PROJECT_ID}-bucket'
 REGION = "us-east1"
 
 # # The code package name comes from the model code in the wals_ml_engine
 # # directory of the solution code base.
-PACKAGE_URI = BUCKET + "/taxifare/code/taxifare-0.1.tar.gz"
+PACKAGE_URI = f'{BUCKET}/taxifare/code/taxifare-0.1.tar.gz'
 JOB_DIR = BUCKET + "/jobs"
 
 default_args = {

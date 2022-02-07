@@ -53,10 +53,7 @@ def filterByArea(scene, slat, wlon, nlat, elon):
       yield scene
 
 def clearest(scenes):
-   if scenes:
-      return min(scenes, key=lambda s: s.CLOUD_COVER)
-   else:
-      return None
+   return min(scenes, key=lambda s: s.CLOUD_COVER) if scenes else None
 
 def run():
    import os

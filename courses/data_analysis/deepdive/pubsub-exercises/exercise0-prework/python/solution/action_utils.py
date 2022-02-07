@@ -28,18 +28,18 @@ class ActionUtils:
     try:
       user_id = int(parts[1])
     except ValueError:
-      print("Could not parse: " + parts[1])
+      print(f'Could not parse: {parts[1]}')
       return False
     try:
       timestamp_seconds = int(parts[0])
     except ValueError:
-      print("Could not parse: " + parts[0])
+      print(f'Could not parse: {parts[0]}')
       return False
     if len(parts) == 4:
       try:
         item_id = int(parts[3])
       except ValueError:
-        print("Could not parse: " + parts[3])
+        print(f'Could not parse: {parts[3]}')
         return False
 
     timestamp = timestamp_pb2.Timestamp()
@@ -56,8 +56,8 @@ class ActionUtils:
   @staticmethod
   def parse_from_csv(file):
     with open(file) as fp:
-     for _, line in enumerate(fp):
-      yield ActionUtils.parse_from_csv_line(line)
+      for line in fp:
+        yield ActionUtils.parse_from_csv_line(line)
 
   @staticmethod
   def encode_action(action):

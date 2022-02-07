@@ -30,7 +30,7 @@ def splitPackageName(packageName):
    result = []
    end = packageName.find('.')
    while end > 0:
-      result.append(packageName[0:end])
+      result.append(packageName[:end])
       end = packageName.find('.', end+1)
    result.append(packageName)
    return result

@@ -97,9 +97,7 @@ def create_input_layers():
         for colname in ["is_male", "plurality"]
     }
 
-    inputs = {**wide_inputs, **deep_inputs}
-
-    return inputs
+    return {**wide_inputs, **deep_inputs}
 
 
 def categorical_fc(name, values):
@@ -190,11 +188,8 @@ def get_model_outputs(wide_inputs, deep_inputs, dnn_hidden_units):
     both = tf.keras.layers.concatenate(
         inputs=[deep_out, wide_out], name="both")
 
-    # Final output is a linear activation because this is regression
-    output = tf.keras.layers.Dense(
+    return tf.keras.layers.Dense(
         units=1, activation="linear", name="weight")(both)
-
-    return output
 
 
 def rmse(y_true, y_pred):

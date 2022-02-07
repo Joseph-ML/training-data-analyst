@@ -161,7 +161,7 @@ def dnn_regression(features, labels, mode, params):
     print("dnn_regression: predictions = {}\n".format(predictions))
 
     # 2. Loss function, training/eval ops
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         loss = tf.losses.mean_squared_error(labels = labels, predictions = predictions)
         train_op = tf.contrib.layers.optimize_loss(
             loss = loss,
@@ -258,7 +258,7 @@ def stacked_lstm_regression(features, labels, mode, params):
     print("stacked_lstm_regression: predictions = {}\n".format(predictions))
 
     # 3. Loss function, training/eval ops
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         loss = tf.losses.mean_squared_error(labels = labels, predictions = predictions)
         train_op = tf.contrib.layers.optimize_loss(
             loss = loss,
@@ -359,7 +359,7 @@ def stacked_lstmN_regression(features, labels, mode, params):
     print("stacked_lstmN_regression: predictions = {}\n".format(predictions))
 
     # 3. Loss function, training/eval ops
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         loss = tf.losses.mean_squared_error(labels = labels, predictions = predictions)
         train_op = tf.contrib.layers.optimize_loss(
             loss = loss,

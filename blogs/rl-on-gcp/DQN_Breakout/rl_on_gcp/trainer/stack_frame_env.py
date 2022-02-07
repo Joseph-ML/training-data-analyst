@@ -48,8 +48,7 @@ class StackFrameEnv(gym.Wrapper):
     """Process the image."""
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     cropped_img = gray_image[35:-15, :]
-    resized_img = cv2.resize(cropped_img, (self.img_height, self.img_width))
-    return resized_img
+    return cv2.resize(cropped_img, (self.img_height, self.img_width))
 
   def _pad_observation(self, observations):
     """Pad observation to give self._k frames."""
@@ -61,9 +60,8 @@ class StackFrameEnv(gym.Wrapper):
   def reset(self):
     """Reset the env."""
     state = self.env.reset()
-    observations = []
     img = self._process_image(state)
-    observations.append(np.expand_dims(img, axis=-1))
+    observations = [np.expand_dims(img, axis=-1)]
     return self._pad_observation(observations)
 
   def step(self, action):

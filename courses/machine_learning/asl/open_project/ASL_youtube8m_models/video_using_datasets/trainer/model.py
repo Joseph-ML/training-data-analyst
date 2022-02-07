@@ -96,7 +96,7 @@ def video_level_model(features, labels, mode, params):
     print("\nvideo_level_model: features = {}".format(features))
     print("video_level_model: labels = {}".format(labels))
     print("video_level_model: mode = {}".format(mode))
-    
+
     # 0. Configure network
     # Get dynamic batch size
     current_batch_size = tf.shape(features['mean_rgb'])[0]
@@ -105,21 +105,21 @@ def video_level_model(features, labels, mode, params):
     # Stack all of the features into a 3-D tensor
     combined_features = tf.concat(values = [features['mean_rgb'], features['mean_audio']], axis = 1) # shape = (current_batch_size, 1024 + 128)
     print("video_level_model: combined_features = {}".format(combined_features))
-    
+
     # 1. Create the DNN structure now
     # Create the input layer to our frame DNN
     network = combined_features # shape = (current_batch_size, 1024 + 128)
     print("video_level_model: network = combined_features = {}".format(network))
-    
+
     # Add hidden layers with the given number of units/neurons per layer
     for units in params['hidden_units']:
         network = tf.layers.dense(inputs = network, units = units, activation = tf.nn.relu) # shape = (current_batch_size, units)
         print("video_level_model: network = {}, units = {}".format(network, units))
-        
+
     # Connect the final hidden layer to a dense layer with no activation to get the logits
     logits = tf.layers.dense(inputs = network, units = NUM_CLASSES, activation = None) # shape = (current_batch_size, NUM_CLASSES)
     print("video_level_model: logits = {}".format(logits))
-    
+
     # Select the top k logits in descending order
     top_k_logits = tf.nn.top_k(input = logits, k = params['top_k'], sorted = True) # shape = (current_batch_size, top_k)
     print("video_level_model: top_k_logits = {}".format(top_k_logits))
@@ -127,15 +127,15 @@ def video_level_model(features, labels, mode, params):
     # Since this is a multi-class, multi-label problem we will apply a sigmoid, not a softmax, to each logit to get its own probability
     probabilities = tf.sigmoid(logits) # shape = (current_batch_size, NUM_CLASSES)
     print("video_level_model: probabilities = {}".format(probabilities))
-    
+
     # Select the top k probabilities in descending order
     top_k_probabilities = tf.sigmoid(top_k_logits.values) # shape = (current_batch_size, top_k)
     print("video_level_model: top_k_probabilities = {}".format(top_k_probabilities))
-    
+
     # Select the top k classes in descending order of likelihood
     top_k_classes = top_k_logits.indices # shape = (current_batch_size, top_k)
     print("video_level_model: top_k_classes = {}".format(top_k_classes))
-    
+
     # The 0/1 predictions based on a threshold, in this case the threshold is if the probability it greater than random chance
     predictions = tf.where(
         condition = probabilities > 1.0 / NUM_CLASSES, # shape = (current_batch_size, NUM_CLASSES)
@@ -149,11 +149,11 @@ def video_level_model(features, labels, mode, params):
         y = tf.zeros_like(tensor = top_k_probabilities))
     print("video_level_model: top_k_predictions = {}\n".format(top_k_predictions))
 
-    # 2. Loss function, training/eval ops 
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    # 2. Loss function, training/eval ops
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         # Since this is a multi-class, multi-label problem, we will use sigmoid activation and cross entropy loss
         loss = tf.losses.sigmoid_cross_entropy(multi_class_labels = labels, logits = logits)
-    
+
         train_op = tf.contrib.layers.optimize_loss(
             loss = loss,
             global_step = tf.train.get_global_step(),
@@ -166,7 +166,7 @@ def video_level_model(features, labels, mode, params):
         loss = None
         train_op = None
         eval_metric_ops = None
-  
+
     # 3. Create predictions
     predictions_dict = {"logits": top_k_logits.values, 
                         "probabilities": top_k_probabilities, 

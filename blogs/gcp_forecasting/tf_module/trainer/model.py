@@ -44,9 +44,7 @@ def split_and_convert_string(string_tensor):
     dense_floats = tf.sparse_tensor_to_dense(
         sp_input=new_sparse_tensor, default_value=0.0)
 
-    dense_floats_vector = tf.squeeze(input=dense_floats, axis=0)
-
-    return dense_floats_vector
+    return tf.squeeze(input=dense_floats, axis=0)
 
 
 def convert_sequences_from_strings_to_floats(features, column_list, seq_len):
@@ -138,11 +136,7 @@ def read_dataset(filename, mode, batch_size, seq_len):
                 seq_len=seq_len))
 
         # Determine amount of times to repeat file if we are training or evaluating
-        if mode == tf.estimator.ModeKeys.TRAIN:
-            num_epochs = None    # indefinitely
-        else:
-            num_epochs = 1    # end-of-input after this
-
+        num_epochs = None if mode == tf.estimator.ModeKeys.TRAIN else 1
         # Repeat files num_epoch times
         dataset = dataset.repeat(count=num_epochs)
 
@@ -153,16 +147,13 @@ def read_dataset(filename, mode, batch_size, seq_len):
         if mode == tf.estimator.ModeKeys.TRAIN:
             dataset = dataset.shuffle(buffer_size=10 * batch_size)
 
-        # Create a iterator, then pull batch of features from the example queue
-        batched_dataset = dataset.make_one_shot_iterator().get_next()
-
-        return batched_dataset
+        return dataset.make_one_shot_iterator().get_next()
 
     return _input_fn
 
 
 def create_LSTM_stack(lstm_hidden_units):
-  """Create LSTM stacked cells.
+    """Create LSTM stacked cells.
 
   Given list of LSTM hidden units return `MultiRNNCell`.
 
@@ -173,21 +164,17 @@ def create_LSTM_stack(lstm_hidden_units):
   Returns:
     `MultiRNNCell` object of stacked LSTM layers.
   """
-  # First create a list of LSTM cell objects using our list of lstm hidden
-  # unit sizes
-  lstm_cells = [tf.contrib.rnn.BasicLSTMCell(
-      num_units=units,
-      forget_bias=1.0,
-      state_is_tuple=True)
-                for units in lstm_hidden_units]
+    # First create a list of LSTM cell objects using our list of lstm hidden
+    # unit sizes
+    lstm_cells = [tf.contrib.rnn.BasicLSTMCell(
+        num_units=units,
+        forget_bias=1.0,
+        state_is_tuple=True)
+                  for units in lstm_hidden_units]
 
-  # Create a stack of layers of LSTM cells
-  # Combines list into MultiRNNCell object
-  stacked_lstm_cells = tf.contrib.rnn.MultiRNNCell(
+    return tf.contrib.rnn.MultiRNNCell(
       cells=lstm_cells,
       state_is_tuple=True)
-
-  return stacked_lstm_cells
 
 
 # Create our model function to be used in our custom estimator
@@ -210,26 +197,26 @@ def sequence_to_one_model(features, labels, mode, params):
 
     # Stack all of the features into a 3-D tensor
     X = tf.stack(values=[features[key] for key in CSV_COLUMNS[:-1]], axis=2)
-    
+
     # Unstack 3-D features tensor into a sequence(list) of 2-D tensors
     X_sequence = tf.unstack(value=X, num=params["seq_len"], axis=1)
 
     # 1. Configure the RNN
     stacked_lstm_cells = create_LSTM_stack(params["lstm_hidden_units"])
-    
+
     lstm_cell = tf.compat.v1.nn.rnn_cell.LSTMCell(
         num_units=params["lstm_hidden_units"], forget_bias=1.0)
     outputs, _ = tf.compat.v1.nn.static_rnn(
         cell=stacked_lstm_cells, inputs=X_sequence, dtype=tf.float64)
-    
+
     # Slice to keep only the last cell of the RNN
     output = outputs[-1]
-    
+
     # Output is result of linear activation of last layer of RNN
     predictions = tf.layers.dense(inputs=output, units=1, activation=None)
-        
+
     # 2. Loss function, training/eval ops
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         labels = tf.expand_dims(input=labels, axis=-1)
 
         loss = tf.losses.mean_squared_error(labels=labels, predictions=predictions)
@@ -245,13 +232,13 @@ def sequence_to_one_model(features, labels, mode, params):
         loss = None
         train_op = None
         eval_metric_ops = None
-    
+
     # 3. Create predictions
     predictions_dict = {"predicted": predictions}
-    
+
     # 4. Create export outputs
     export_outputs = {"predict_export_outputs": tf.estimator.export.PredictOutput(outputs=predictions)}
-    
+
     # 5. Return EstimatorSpec
     return tf.estimator.EstimatorSpec(
         mode=mode,
@@ -287,12 +274,8 @@ def fix_shape_and_type_for_serving(placeholder):
             start=0, limit=cur_batch_size, dtype=tf.int64),
         dtype=tf.string), axis=0)
 
-    # Convert each string in the split tensor to float
-    # shape = (batch_size, seq_len)
-    feature_tensor = tf.string_to_number(
+    return tf.string_to_number(
         string_tensor=split_string, out_type=tf.float64)
-
-    return feature_tensor
 
 
 def get_shape_and_set_modified_shape_2D(tensor, additional_dimension_sizes):

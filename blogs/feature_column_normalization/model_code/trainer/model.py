@@ -94,9 +94,10 @@ def train_and_evaluate(use_normalization, outdir):
   def json_serving_input_fn():
     """Build the serving inputs. For serving real-time predictions
     using ml-engine."""
-    inputs = {}
-    for feat in feature_columns:
-      inputs[feat.name] = tf.placeholder(shape=[None], dtype=feat.dtype)
+    inputs = {
+        feat.name: tf.placeholder(shape=[None], dtype=feat.dtype)
+        for feat in feature_columns
+    }
     return tf.estimator.export.ServingInputReceiver(inputs, inputs)
   
   # Evaluation and serving input function.

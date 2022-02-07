@@ -52,7 +52,7 @@ def estimate_local(instances):
 
     init_predictor()
 
-    inputs = dict((k, [v]) for k, v in instances[0].items())
+    inputs = {k: [v] for k, v in instances[0].items()}
     for i in range(1,len(instances)):
         instance = instances[i]
 
@@ -92,6 +92,5 @@ def estimate_cmle(instances):
 
     model_url = 'projects/{}/models/{}/versions/{}'.format(PROJECT, CMLE_MODEL_NAME, CMLE_MODEL_VERSION)
     response = cmle_api.projects().predict(body=request_data, name=model_url).execute()
-    values = [item["predictions"][0] for item in response['predictions']]
-    return values
+    return [item["predictions"][0] for item in response['predictions']]
 #[END inference_cmle]

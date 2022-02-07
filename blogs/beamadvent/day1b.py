@@ -19,10 +19,7 @@ import argparse, logging
 
 def compute_fuel(mass):
    fuel = np.floor(mass/3) - 2
-   if fuel > 0:
-      return (fuel + compute_fuel(fuel))
-   else:
-      return 0
+   return (fuel + compute_fuel(fuel)) if fuel > 0 else 0
 
 if __name__ == '__main__':
    for input, output in [(14,2), (1969,966), (100756,50346)]:

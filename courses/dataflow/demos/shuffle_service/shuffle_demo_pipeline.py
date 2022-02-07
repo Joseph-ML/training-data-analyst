@@ -13,7 +13,7 @@ from apache_beam.runners import DataflowRunner
 def extract_platform(element):
     platform = element.pop('dependency_platform')
     #Artifical fanout of data
-    for k in range(1):
+    for _ in range(1):
         yield (platform, 1)
 
 def count_per_key(element):
@@ -22,17 +22,13 @@ def count_per_key(element):
     return (key, count)
 
 def to_dict(element):
-    result = {}
-    result['platform'] = element[0]
-    result['dep_count'] = element[1]
-    return result
+    return {'platform': element[0], 'dep_count': element[1]}
 
 class CountPerPlatform(beam.PTransform):
     def expand(self, pcoll):
-        output = (pcoll | 'GBK' >> beam.GroupByKey()
+        return (pcoll | 'GBK' >> beam.GroupByKey()
                         | 'CountPerKey' >> beam.Map(count_per_key)
                         )
-        return output
 
 def run():
     # Command line arguments

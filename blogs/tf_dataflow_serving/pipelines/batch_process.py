@@ -30,23 +30,25 @@ SOURCE_QUERY = """
 
 
 def get_source_query(sample_size):
-    query = """
+    return (
+        """
         SELECT *
         FROM {}
         LIMIT {}
-    """.format(SOURCE_QUERY,sample_size)
-    return query
+    """.format(
+            SOURCE_QUERY, sample_size
+        )
+    )
 
 
 def get_sample_size_desc(sample_size):
     desc = '({}{} Rows)'
     if sample_size >= 1000000:
-        desc = desc.format(sample_size/1000000.0,'M')
+        return desc.format(sample_size/1000000.0,'M')
     elif sample_size >= 1000:
-        desc = desc.format(sample_size /1000.0, 'K')
+        return desc.format(sample_size /1000.0, 'K')
     else:
-        desc = desc.format(sample_size, '')
-    return desc
+        return desc.format(sample_size, '')
 
 
 def process_row(bq_row):
@@ -66,24 +68,19 @@ def process_row(bq_row):
                      ['White', 'Black', 'American Indian', 'Chinese',
                       'Japanese', 'Hawaiian', 'Filipino',
                       'Asian bq_row', 'Korean', 'Samaon', 'Vietnamese']))
-    instance = dict()
-
-    instance['is_male'] = str(bq_row['is_male'])
-    instance['mother_age'] = bq_row['mother_age']
-
-    if 'mother_race' in bq_row and bq_row['mother_race'] in races:
-        instance['mother_race'] = races[bq_row['mother_race']]
-    else:
-        instance['mother_race'] = 'Unknown'
-
-    instance['plurality'] = bq_row['plurality']
-    instance['gestation_weeks'] = bq_row['gestation_weeks']
-    instance['mother_married'] = str(bq_row['mother_married'])
-    instance['cigarette_use'] = str(bq_row['cigarette_use'])
-    instance['alcohol_use'] = str(bq_row['alcohol_use'])
-    instance['weight_pounds'] = str(bq_row['weight_pounds'])
-
-    return instance
+    return {
+        'is_male': str(bq_row['is_male']),
+        'mother_age': bq_row['mother_age'],
+        'mother_race': races[bq_row['mother_race']]
+        if 'mother_race' in bq_row and bq_row['mother_race'] in races
+        else 'Unknown',
+        'plurality': bq_row['plurality'],
+        'gestation_weeks': bq_row['gestation_weeks'],
+        'mother_married': str(bq_row['mother_married']),
+        'cigarette_use': str(bq_row['cigarette_use']),
+        'alcohol_use': str(bq_row['alcohol_use']),
+        'weight_pounds': str(bq_row['weight_pounds']),
+    }
 
 
 def to_json_line(bq_row):
@@ -103,21 +100,19 @@ def to_json_line(bq_row):
                      ['White', 'Black', 'American Indian', 'Chinese',
                       'Japanese', 'Hawaiian', 'Filipino',
                       'Asian bq_row', 'Korean', 'Samaon', 'Vietnamese']))
-    instance = dict()
+    instance = {
+        'is_male': str(bq_row['is_male']),
+        'mother_age': bq_row['mother_age'],
+        'mother_race': races[bq_row['mother_race']]
+        if 'mother_race' in bq_row and bq_row['mother_race'] in races
+        else 'Unknown',
+        'plurality': bq_row['plurality'],
+        'gestation_weeks': bq_row['gestation_weeks'],
+        'mother_married': str(bq_row['mother_married']),
+        'cigarette_use': str(bq_row['cigarette_use']),
+        'alcohol_use': str(bq_row['alcohol_use']),
+    }
 
-    instance['is_male'] = str(bq_row['is_male'])
-    instance['mother_age'] = bq_row['mother_age']
-
-    if 'mother_race' in bq_row and bq_row['mother_race'] in races:
-        instance['mother_race'] = races[bq_row['mother_race']]
-    else:
-        instance['mother_race'] = 'Unknown'
-
-    instance['plurality'] = bq_row['plurality']
-    instance['gestation_weeks'] = bq_row['gestation_weeks']
-    instance['mother_married'] = str(bq_row['mother_married'])
-    instance['cigarette_use'] = str(bq_row['cigarette_use'])
-    instance['alcohol_use'] = str(bq_row['alcohol_use'])
 
     return json.dumps(instance)
 
@@ -170,7 +165,7 @@ def run_pipeline(inference_type, sample_size, sink_location, runner, args=None):
 
     source_query = get_source_query(sample_size)
 
-    sink_location = sink_location + "/data-estimates"
+    sink_location = f'{sink_location}/data-estimates'
 
     sample_size_desc = get_sample_size_desc(sample_size)
 
@@ -196,7 +191,7 @@ def run_pipeline_with_batch_predict(sample_size, sink_location, runner, args=Non
 
     source_query = get_source_query(sample_size)
 
-    sink_location = sink_location + "/data-prep"
+    sink_location = f'{sink_location}/data-prep'
 
     sample_size_desc = get_sample_size_desc(sample_size)
 

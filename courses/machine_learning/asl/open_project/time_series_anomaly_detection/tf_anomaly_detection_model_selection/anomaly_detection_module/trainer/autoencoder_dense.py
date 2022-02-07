@@ -26,12 +26,10 @@ def dense_encoder(X, params):
         units=units,
         activation=tf.nn.relu)
 
-  latent_matrix = tf.layers.dense(
+  return tf.layers.dense(
       inputs=network,
       units=params["latent_vector_size"],
       activation=tf.nn.relu)
-
-  return latent_matrix
 
 
 def dense_decoder(latent_matrix, orig_dims, params):
@@ -59,12 +57,10 @@ def dense_decoder(latent_matrix, orig_dims, params):
         units=units,
         activation=tf.nn.relu)
 
-  output_matrix = tf.layers.dense(
+  return tf.layers.dense(
       inputs=network,
       units=orig_dims,
       activation=tf.nn.relu)
-
-  return output_matrix
 
 
 def dense_autoencoder(X, orig_dims, params):
@@ -84,9 +80,7 @@ def dense_autoencoder(X, orig_dims, params):
     that is the reconstructed inputs.
   """
   latent_matrix = dense_encoder(X, params)
-  output_matrix = dense_decoder(latent_matrix, orig_dims, params)
-
-  return output_matrix
+  return dense_decoder(latent_matrix, orig_dims, params)
 
 
 def dense_autoencoder_model(
@@ -136,31 +130,30 @@ def dense_autoencoder_model(
   # shape = (cur_batch_size * num_feat, seq_len)
   X_feat_recon = dense_autoencoder(X_feat, params["seq_len"], params)
 
-  if (mode == tf.estimator.ModeKeys.TRAIN and
-      params["training_mode"] == "reconstruction"):
-    X_time_recon_3d = tf.reshape(
-        tensor=X_time_recon,
-        shape=[cur_batch_size, params["seq_len"], params["num_feat"]])
-    X_feat_recon_3d = tf.transpose(
-        a=tf.reshape(
-            tensor=X_feat_recon,
-            shape=[cur_batch_size, params["num_feat"], params["seq_len"]]),
-        perm=[0, 2, 1])
-
-    X_time_recon_3d_weighted = X_time_recon_3d * params["time_loss_weight"]
-    X_feat_recon_3d_weighted = X_feat_recon_3d * params["feat_loss_weight"]
-
-    predictions = (X_time_recon_3d_weighted + X_feat_recon_3d_weighted) \
-      / (params["time_loss_weight"] + params["feat_loss_weight"])
-
-    loss = tf.losses.mean_squared_error(labels=X, predictions=predictions)
-
-    train_op = tf.contrib.layers.optimize_loss(
-        loss=loss,
-        global_step=tf.train.get_global_step(),
-        learning_rate=params["learning_rate"],
-        optimizer="Adam")
-
-    return loss, train_op, None, None, None, None
-  else:
+  if (mode != tf.estimator.ModeKeys.TRAIN
+      or params["training_mode"] != "reconstruction"):
     return None, None, X_time, X_time_recon, X_feat, X_feat_recon
+  X_time_recon_3d = tf.reshape(
+      tensor=X_time_recon,
+      shape=[cur_batch_size, params["seq_len"], params["num_feat"]])
+  X_feat_recon_3d = tf.transpose(
+      a=tf.reshape(
+          tensor=X_feat_recon,
+          shape=[cur_batch_size, params["num_feat"], params["seq_len"]]),
+      perm=[0, 2, 1])
+
+  X_time_recon_3d_weighted = X_time_recon_3d * params["time_loss_weight"]
+  X_feat_recon_3d_weighted = X_feat_recon_3d * params["feat_loss_weight"]
+
+  predictions = (X_time_recon_3d_weighted + X_feat_recon_3d_weighted) \
+    / (params["time_loss_weight"] + params["feat_loss_weight"])
+
+  loss = tf.losses.mean_squared_error(labels=X, predictions=predictions)
+
+  train_op = tf.contrib.layers.optimize_loss(
+      loss=loss,
+      global_step=tf.train.get_global_step(),
+      learning_rate=params["learning_rate"],
+      optimizer="Adam")
+
+  return loss, train_op, None, None, None, None

@@ -19,15 +19,10 @@ uploads file into google cloud storage
 - return public_url
 """
 def upload_file(image_file, public):
-    if not image_file:
-        return None
-
-    public_url = storage.upload_file(
+    return None if not image_file else storage.upload_file(
        image_file, 
        public
     )
-
-    return public_url
 
 """
 uploads file into google cloud storage
@@ -35,10 +30,7 @@ uploads file into google cloud storage
 - call datastore helper method to save question
 """
 def save_question(data, image_file):
-    if image_file:
-        data['imageUrl'] = str(upload_file(image_file, True))
-    else:
-        data['imageUrl'] = u''
+    data['imageUrl'] = str(upload_file(image_file, True)) if image_file else u''
     data['correctAnswer'] = int(data['correctAnswer'])
     datastore.save_question(data)
     return
