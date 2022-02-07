@@ -52,8 +52,7 @@ def AutoRef(base, resource, *args):
 
 def OrderedItems(dict_obj):
   """Convenient method to yield sorted iteritems of a dictionary."""
-  keys = list(dict_obj.keys())
-  keys.sort()
+  keys = sorted(dict_obj.keys())
   for k in keys:
     yield (k, dict_obj[k])
 
@@ -65,7 +64,7 @@ def ShortenZoneName(zone):
   coord = default.LOC[coord.lower()]
   number = str(number)
   letter = letter.lower()
-  return geo + '-' + coord + number + letter
+  return f'{geo}-{coord}{number}{letter}'
 
 
 def ZoneToRegion(zone):
@@ -112,7 +111,7 @@ def MakeLocalComputeLink(context, key):
   if IsComputeLink(value):
     return value
   else:
-    return LocalComputeLink(project, zone, key + 's', value)
+    return LocalComputeLink(project, zone, f'{key}s', value)
 
 
 def MakeGlobalComputeLink(context, key):
@@ -120,7 +119,7 @@ def MakeGlobalComputeLink(context, key):
   if IsComputeLink(value):
     return value
   else:
-    return GlobalComputeLink(project, key + 's', value)
+    return GlobalComputeLink(project, f'{key}s', value)
 
 
 def MakeSubnetworkComputeLink(context, key):
@@ -138,11 +137,10 @@ def MakeFQHN(context, name):
 def MakeC2DImageLink(name, dev_mode=False):
   if IsGlobalProjectShortcut(name) or name.startswith('http'):
     return name
+  if dev_mode:
+    return 'global/images/%s' % name
   else:
-    if dev_mode:
-      return 'global/images/%s' % name
-    else:
-      return GlobalComputeLink(default.C2D_IMAGES, 'images', name)
+    return GlobalComputeLink(default.C2D_IMAGES, 'images', name)
 
 
 def IsGlobalProjectShortcut(name):
@@ -212,8 +210,7 @@ def GenerateEmbeddableYaml(yaml_string):
   # printing the YAML string in a single line format. Consistent ordering of
   # the string is also guaranteed by using yaml.dump.
   yaml_object = yaml.load(yaml_string)
-  dumped_yaml = yaml.dump(yaml_object, default_flow_style=True)
-  return dumped_yaml
+  return yaml.dump(yaml_object, default_flow_style=True)
 
 
 def FormatErrorsDec(func):

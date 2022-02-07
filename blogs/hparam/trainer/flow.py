@@ -20,10 +20,8 @@ def compute_delay(flow, x12, x32):
     t32 = 1. + x32 / (1. - x32 / 10.);
     t24 = x24 / (1. - x24 / 30.);
     t34 = 5 + .1 * x34 / (1. - x34 / 10.);
-  
-    # total delay
-    f = t12*x12 + t13*x13 + t32*x32 + t24*x24 + t34*x34;
-    return(f);
+
+    return t12*x12 + t13*x13 + t32*x32 + t24*x24 + t34*x34;
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

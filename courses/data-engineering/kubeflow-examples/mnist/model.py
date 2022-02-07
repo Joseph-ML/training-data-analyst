@@ -62,8 +62,7 @@ def parse_arguments():
                       default=0.01,
                       help='Learning rate for training.')
 
-  args = parser.parse_known_args()[0]
-  return args
+  return parser.parse_known_args()[0]
 
 
 def conv_model(features, labels, mode, params):

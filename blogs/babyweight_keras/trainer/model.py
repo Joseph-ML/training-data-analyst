@@ -30,27 +30,22 @@ LABEL_COLUMN = 'weight_pounds'
 def read_dataset(bucket, prefix, pattern, batch_size=512, eval=False):
     # use prefix to create filename
     filename = 'gs://{}/babyweight/preproc/{}*{}*'.format(bucket, prefix, pattern)
-    if eval:
-        dataset = tf.data.experimental.make_csv_dataset(
+    return tf.data.experimental.make_csv_dataset(
             filename, header=False, batch_size=batch_size,
             shuffle=False, num_epochs=1,
             column_names=CSV_COLUMNS, label_name=LABEL_COLUMN,
             select_columns=SELECT_COLUMNS
-        )
-    else:
-        dataset = tf.data.experimental.make_csv_dataset(
+        ) if eval else tf.data.experimental.make_csv_dataset(
             filename, header=False, batch_size=batch_size,
             shuffle=True, num_epochs=None,
             column_names=CSV_COLUMNS, label_name=LABEL_COLUMN,
             select_columns=SELECT_COLUMNS
         )
-    return dataset
 
 
 def get_wide_deep():
     # defin model inputs
-    inputs = {}
-    inputs['is_male'] = layers.Input(shape=(), name='is_male', dtype='string')
+    inputs = {'is_male': layers.Input(shape=(), name='is_male', dtype='string')}
     inputs['plurality'] = layers.Input(shape=(), name='plurality', dtype='string')
     inputs['mother_age'] = layers.Input(shape=(), name='mother_age', dtype='float32')
     inputs['gestation_weeks'] = layers.Input(shape=(), name='gestation_weeks', dtype='float32')

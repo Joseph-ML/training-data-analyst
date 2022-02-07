@@ -31,7 +31,7 @@ def ZonalComputeUrl(project, zone, collection, name):
 def GenerateConfig(context):
   """Generate configuration."""
 
-  name_prefix = context.env['deployment'] + '-' + context.env['name']
+  name_prefix = f'{context.env["deployment"]}-{context.env["name"]}'
 
   instance = {
       'zone': context.properties['zone'],
@@ -66,13 +66,10 @@ def GenerateConfig(context):
           }]
       }
 
-  # Resources to return.
-  resources = {
+  return {
       'resources': [{
-          'name': name_prefix + '-vm',
+          'name': f'{name_prefix}-vm',
           'type': 'compute.v1.instance',
-          'properties': instance
-          }]
-      }
-
-  return resources
+          'properties': instance,
+      }]
+  }

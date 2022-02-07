@@ -7,12 +7,6 @@ INPUT = 'input.json'
 RUNNER = 'DirectRunner'
 OUTPUT = 'output.json'
 
-# to try it with Dataflow, copy the file to your bucket and use DataflowRunner
-if False:
-    INPUT = 'gs://{}/linearopt/input.json'.format(BUCKET)
-    RUNNER = 'DataflowRunner'
-    OUTPUT = 'gs://{}/linearopt/output.json'.format(BUCKET)
-
 # to try it in streaming mode, write one json message at a time to pub/sub
 # and change the input to beam.io.ReadFromPubSub(topic=input_topic)
 # and change the output to beam.io.WriteStringsToPubSub(output_topic)

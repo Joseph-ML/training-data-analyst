@@ -126,8 +126,7 @@ def create_rolling_features_label(series, window_size, pred_offset, pred_n=1):
 def add_aggregate_features(df, time_series_col_names):
   """Compute summary statistic features for every row of dataframe."""
   x = df[time_series_col_names]
-  features = {}
-  features['mean'] = x.mean(axis=1)
+  features = {'mean': x.mean(axis=1)}
   features['std'] = x.std(axis=1)
   features['min'] = x.min(axis=1)
   features['max'] = x.max(axis=1)
@@ -160,13 +159,9 @@ def _count_holidays(dates, months, weeks):
   holidays = cal.holidays(start=dates.min(), end=dates.max())
 
   def count_holidays_during_month(date):
-    n_holidays = 0
     beg = date
     end = date + pd.DateOffset(months=months, weeks=weeks)
-    for h in holidays:
-      if beg <= h < end:
-        n_holidays += 1
-    return n_holidays
+    return sum(beg <= h < end for h in holidays)
 
   return pd.Series(dates).apply(count_holidays_during_month)
 

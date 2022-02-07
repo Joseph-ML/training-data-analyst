@@ -32,30 +32,26 @@ def createJson(line):
    import json
    import uuid
 
-   header = 'FL_DATE,UNIQUE_CARRIER,AIRLINE_ID,CARRIER,FL_NUM,ORIGIN_AIRPORT_ID,ORIGIN_AIRPORT_SEQ_ID,ORIGIN_CITY_MARKET_ID,ORIGIN,DEST_AIRPORT_ID,DEST_AIRPORT_SEQ_ID,DEST_CITY_MARKET_ID,DEST,CRS_DEP_TIME,DEP_TIME,DEP_DELAY,TAXI_OUT,WHEELS_OFF,WHEELS_ON,TAXI_IN,CRS_ARR_TIME,ARR_TIME,ARR_DELAY,CANCELLED,CANCELLATION_CODE,DIVERTED,DISTANCE,DEP_AIRPORT_LAT,DEP_AIRPORT_LON,DEP_AIRPORT_TZOFFSET,ARR_AIRPORT_LAT,ARR_AIRPORT_LON,ARR_AIRPORT_TZOFFSET'.split(',')
-
-   featdict = {}
    fields = line.split(',')
-   for name, value in zip(header, fields):
-      featdict[name] = value
-
+   header = 'FL_DATE,UNIQUE_CARRIER,AIRLINE_ID,CARRIER,FL_NUM,ORIGIN_AIRPORT_ID,ORIGIN_AIRPORT_SEQ_ID,ORIGIN_CITY_MARKET_ID,ORIGIN,DEST_AIRPORT_ID,DEST_AIRPORT_SEQ_ID,DEST_CITY_MARKET_ID,DEST,CRS_DEP_TIME,DEP_TIME,DEP_DELAY,TAXI_OUT,WHEELS_OFF,WHEELS_ON,TAXI_IN,CRS_ARR_TIME,ARR_TIME,ARR_DELAY,CANCELLED,CANCELLATION_CODE,DIVERTED,DISTANCE,DEP_AIRPORT_LAT,DEP_AIRPORT_LON,DEP_AIRPORT_TZOFFSET,ARR_AIRPORT_LAT,ARR_AIRPORT_LON,ARR_AIRPORT_TZOFFSET'.split(
+       ',')
+   featdict = dict(zip(header, fields))
    rowid = uuid.uuid4().int & (1<<63) - 1 # make up a 64-bit rowid since this data doesn't have it
    for name in ['CARRIER', 'ORIGIN', 'DEST', 'DEP_DELAY', 
                 'ARR_DELAY', 'CANCELLED']:
-       try:
+      try:
          value = featdict[name]
-         if name == 'DEP_DELAY' or name == 'ARR_DELAY':
-           value = thresh_delay(value)
+         if name in ['DEP_DELAY', 'ARR_DELAY']:
+            value = thresh_delay(value)
          record = {
-           'dataName': name,
-           'dataValue': value,
-           'groupId': str(rowid),  # int64 as a string
-           'startTime': featdict['DEP_TIME'] + 'Z',
-           # 'endTime': featdict['ARR_TIME'] + 'Z'  # do this for realtime analysis only
+             'dataName': name,
+             'dataValue': value,
+             'groupId': str(rowid),
+             'startTime': f'{featdict["DEP_TIME"]}Z',
          }
          yield json.dumps(record).replace(' ', '')
-       except:
-         pass
+      except:
+        pass
    
 
 if __name__ == '__main__':

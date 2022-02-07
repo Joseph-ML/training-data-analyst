@@ -34,13 +34,9 @@ def create_LSTM_stack(lstm_hidden_units, lstm_dropout_output_keep_probs):
       state_keep_prob=1.0)
                         for cell_index in range(len(lstm_cells))]
 
-  # Create a stack of layers of LSTM cells
-  # Combines list into MultiRNNCell object
-  stacked_lstm_cells = tf.contrib.rnn.MultiRNNCell(
+  return tf.contrib.rnn.MultiRNNCell(
       cells=dropout_lstm_cells,
       state_is_tuple=True)
-
-  return stacked_lstm_cells
 
 
 # The rnn_decoder function takes labels during TRAIN/EVAL

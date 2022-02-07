@@ -49,7 +49,7 @@ def splitPackageName(packageName):
    result = []
    end = packageName.find('.')
    while end > 0:
-      result.append(packageName[0:end])
+      result.append(packageName[:end])
       end = packageName.find('.', end+1)
    result.append(packageName)
    return result
@@ -80,18 +80,18 @@ def is_popular(pcoll):
 
 
 def packageHelp(record, keyword):
-   count=0
    package_name=''
    if record is not None:
-     lines=record.split('\n')
-     for line in lines:
-       if line.startswith(keyword):
-         package_name=line
-       if 'FIXME' in line or 'TODO' in line:
-         count+=1
-     packages = (getPackages(package_name, keyword) )
-     for p in packages:
-         yield (p,count)
+      lines=record.split('\n')
+      count=0
+      for line in lines:
+        if line.startswith(keyword):
+          package_name=line
+        if 'FIXME' in line or 'TODO' in line:
+          count+=1
+      packages = (getPackages(package_name, keyword) )
+      for p in packages:
+          yield (p,count)
 
 def needs_help(pcoll):
  return (pcoll
@@ -121,66 +121,63 @@ def compositeScore(popular, help):
 # Define pipeline runner (lazy execution)
 def run():
 
-  # Command line arguments
-  parser = argparse.ArgumentParser(description='Demonstrate side inputs')
-  parser.add_argument('--bucket', required=True, help='Specify Cloud Storage bucket for output')
-  parser.add_argument('--project',required=True, help='Specify Google Cloud project')
-  group = parser.add_mutually_exclusive_group(required=True)
-  group.add_argument('--DirectRunner',action='store_true')
-  group.add_argument('--DataFlowRunner',action='store_true')
+   # Command line arguments
+   parser = argparse.ArgumentParser(description='Demonstrate side inputs')
+   parser.add_argument('--bucket', required=True, help='Specify Cloud Storage bucket for output')
+   parser.add_argument('--project',required=True, help='Specify Google Cloud project')
+   group = parser.add_mutually_exclusive_group(required=True)
+   group.add_argument('--DirectRunner',action='store_true')
+   group.add_argument('--DataFlowRunner',action='store_true')
 
-  opts = parser.parse_args()
+   opts = parser.parse_args()
 
-  if opts.DirectRunner:
-    runner='DirectRunner'
-  if opts.DataFlowRunner:
-    runner='DataFlowRunner'
+   if opts.DirectRunner:
+     runner='DirectRunner'
+   if opts.DataFlowRunner:
+     runner='DataFlowRunner'
 
-  bucket = opts.bucket
-  project = opts.project
+   bucket = opts.bucket
+   project = opts.project
 
-  #    Limit records if running local, or full data if running on the cloud
-  limit_records=''
-  if runner == 'DirectRunner':
-     limit_records='LIMIT 3000'
-  get_java_query='SELECT content FROM [fh-bigquery:github_extracts.contents_java_2016] {0}'.format(limit_records)
+   limit_records = 'LIMIT 3000' if runner == 'DirectRunner' else ''
+   get_java_query='SELECT content FROM [fh-bigquery:github_extracts.contents_java_2016] {0}'.format(limit_records)
 
-  argv = [
-    '--project={0}'.format(project),
-    '--job_name=javahelpjob',
-    '--save_main_session',
-    '--staging_location=gs://{0}/staging/'.format(bucket),
-    '--temp_location=gs://{0}/staging/'.format(bucket),
-    '--runner={0}'.format(runner),
-    '--region=us-central1',
-    '--max_num_workers=5'
-    ]
+   argv = [
+     '--project={0}'.format(project),
+     '--job_name=javahelpjob',
+     '--save_main_session',
+     '--staging_location=gs://{0}/staging/'.format(bucket),
+     '--temp_location=gs://{0}/staging/'.format(bucket),
+     '--runner={0}'.format(runner),
+     '--region=us-central1',
+     '--max_num_workers=5'
+     ]
 
-  p = beam.Pipeline(argv=argv)
+   p = beam.Pipeline(argv=argv)
 
 
-  # Read the table rows into a PCollection (a Python Dictionary)
-  bigqcollection = p | 'ReadFromBQ' >> beam.io.Read(beam.io.BigQuerySource(project=project,query=get_java_query))
+   # Read the table rows into a PCollection (a Python Dictionary)
+   bigqcollection = p | 'ReadFromBQ' >> beam.io.Read(beam.io.BigQuerySource(project=project,query=get_java_query))
 
-  popular_packages = is_popular(bigqcollection) # main input
+   popular_packages = is_popular(bigqcollection) # main input
 
-  help_packages = needs_help(bigqcollection) # side input
+   help_packages = needs_help(bigqcollection) # side input
 
-  # Use side inputs to view the help_packages as a dictionary
-  results = popular_packages | 'Scores' >> beam.FlatMap(lambda element, the_dict: compositeScore(element,the_dict), beam.pvalue.AsDict(help_packages))
+   # Use side inputs to view the help_packages as a dictionary
+   results = popular_packages | 'Scores' >> beam.FlatMap(lambda element, the_dict: compositeScore(element,the_dict), beam.pvalue.AsDict(help_packages))
 
-  # Write out the composite scores and packages to an unsharded csv file
-  output_results = 'gs://{0}/javahelp/Results'.format(bucket)
-  results | 'WriteToStorage' >> beam.io.WriteToText(output_results,file_name_suffix='.csv',shard_name_template='')
+   # Write out the composite scores and packages to an unsharded csv file
+   output_results = 'gs://{0}/javahelp/Results'.format(bucket)
+   results | 'WriteToStorage' >> beam.io.WriteToText(output_results,file_name_suffix='.csv',shard_name_template='')
 
-  # Run the pipeline (all operations are deferred until run() is called).
+   # Run the pipeline (all operations are deferred until run() is called).
 
 
-  if runner == 'DataFlowRunner':
-     p.run()
-  else:
-     p.run().wait_until_finish()
-  logging.getLogger().setLevel(logging.INFO)
+   if runner == 'DataFlowRunner':
+      p.run()
+   else:
+      p.run().wait_until_finish()
+   logging.getLogger().setLevel(logging.INFO)
 
 
 if __name__ == '__main__':

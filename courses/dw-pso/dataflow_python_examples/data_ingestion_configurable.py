@@ -68,7 +68,7 @@ class FileCoder(object):
             logging.warn('Record length %s, expected %s: [%s]' %
                          (len(split_value), self._num_columns, split_value))
             return []
-        return dict((self._columns[i], v) for i, v in enumerate(split_value))
+        return {self._columns[i]: v for i, v in enumerate(split_value)}
 
 
 class PrepareFieldTypes(beam.DoFn):
@@ -80,14 +80,15 @@ class PrepareFieldTypes(beam.DoFn):
         self._tm = importlib.import_module('time')
 
     def _return_default_value(self, ftype):
-        if ftype == 'INTEGER':
-            return 0
-        elif ftype == 'FLOAT':
+        if (
+            ftype == 'INTEGER'
+            or ftype == 'FLOAT'
+            or ftype != 'DATATIME'
+            and ftype == 'TIMESTAMP'
+        ):
             return 0
         elif ftype == 'DATATIME':
             return self._tm.mktime(self._tm.strptime('1970-01-01', '%Y-%m-%d'))
-        elif ftype == 'TIMESTAMP':
-            return 0
         else:
             return ''
 
@@ -161,10 +162,11 @@ def _fetch_table(table_name):
 
 
 def _get_bq_schema(fields):
-    bq_fields = []
-    for k, v in fields.items():
-        bq_fields.append(
-            TableFieldSchema(name=k, type=v, description='Field %s' % k))
+    bq_fields = [
+        TableFieldSchema(name=k, type=v, description='Field %s' % k)
+        for k, v in fields.items()
+    ]
+
     bq_fields.append(
         TableFieldSchema(name='_RAWTIMESTAMP',
                          type='TIMESTAMP',

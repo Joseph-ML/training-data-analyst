@@ -53,26 +53,25 @@ def send_request(*args, **kwargs):
     token = token.decode()
   token = token.strip()
 
-  headers = {
-    "Authorization": "Bearer " + token,
-  }
+  headers = {"Authorization": f'Bearer {token}'}
 
   if "headers" not in kwargs:
     kwargs["headers"] = {}
 
   kwargs["headers"].update(headers)
 
-  r = requests.post(*args, **kwargs)
-
-  return r
+  return requests.post(*args, **kwargs)
 
 @pytest.mark.xfail
 def test_predict(master, namespace, service):
-  app_credentials = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-  if app_credentials:
+  if app_credentials := os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
     print("Activate service account")
-    util.run(["gcloud", "auth", "activate-service-account",
-              "--key-file=" + app_credentials])
+    util.run([
+        "gcloud",
+        "auth",
+        "activate-service-account",
+        f'--key-file={app_credentials}',
+    ])
 
   if not master:
     print("--master set; using kubeconfig")

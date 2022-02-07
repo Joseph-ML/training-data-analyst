@@ -73,10 +73,9 @@ def add_question():
 
 @webapp_blueprint.route('/leaderboard', methods=['GET'])
 def get_leaderboard():
-    if request.method == 'GET':
-        scores = spanner.get_leaderboard()
-        
-        return render_template('leaderboard.html', scores=scores)
-    else:        
+    if request.method != 'GET':
         return "Method not supported for /leaderboard"
+    scores = spanner.get_leaderboard()
+
+    return render_template('leaderboard.html', scores=scores)
 

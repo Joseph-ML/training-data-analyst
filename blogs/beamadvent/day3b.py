@@ -20,23 +20,23 @@ import argparse, logging
 def find_locations(wire):
    positions = [(0,(0,0))]  # row, (col, steps)
    for nav in wire.split(','):
-     dir = nav[0]
-     if dir == 'R':
-       update = (1, 0)
-     elif dir == 'U':
-       update = (0, 1)
-     elif dir == 'L':
-       update = (-1, 0)
-     else:
-       update = (0, -1)
-     
-     n = int(nav[1:])
-     for x in range(n):
-       row, (col, steps) = positions[-1]
-       newpos = (row + update[0],
-                 (col + update[1], steps+1))
-       positions.append(newpos)
-   
+      dir = nav[0]
+      if dir == 'L':
+         update = (-1, 0)
+      elif dir == 'R':
+         update = (1, 0)
+      elif dir == 'U':
+         update = (0, 1)
+      else:
+         update = (0, -1)
+
+      n = int(nav[1:])
+      for _ in range(n):
+         row, (col, steps) = positions[-1]
+         newpos = (row + update[0],
+                   (col + update[1], steps+1))
+         positions.append(newpos)
+
    return positions[1:] # remove the 0,0
 
 def find_intersection(kv):

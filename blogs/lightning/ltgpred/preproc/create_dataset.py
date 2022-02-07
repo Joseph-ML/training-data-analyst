@@ -27,20 +27,19 @@ from ltgpred.trainer import boxdef as bd
 def _generate_hours(starthour, endhour, startday, endday, year, is_train):
   for h in range(starthour, endhour+1):
     for d in range(startday, endday+1):
-        data = {
-          'hour': h,
-          'day': d,
-          'year': year
-        }
-        if hash(str(data)) % 10 < 7:
-          if is_train:
-            yield data
-        else:
-          if not is_train:
-            yield data
+      data = {
+        'hour': h,
+        'day': d,
+        'year': year
+      }
+      if hash(str(data)) % 10 < 7:
+        if is_train:
+          yield data
+      elif not is_train:
+        yield data
 
 def generate_hours(startdate: str, enddate: str, starthour: int, endhour: int, is_train: bool):
-    """generates hours within the specified ranges for training or eval.
+  """generates hours within the specified ranges for training or eval.
 
       Call this method twice, once with is_train=True and next with is_train=False
       Args:
@@ -52,19 +51,19 @@ def generate_hours(startdate: str, enddate: str, starthour: int, endhour: int, i
       Yields:
         dict of {'hour': h, 'day': d, 'year': y}, one for each hour in the range
     """
-    startyear = int(startdate[:4])
-    endyear = int(enddate[:4])
-    startday = int(startdate[5:])
-    endday = int(enddate[5:])
-    if endyear == startyear:
-        yield from _generate_hours(starthour, endhour, startday, endday, startyear, is_train)
-    else:
-        # for startyear, go from startday to day#365
-        # FIXME: leap years?
-        yield from _generate_hours(starthour, endhour, startday, 365, startyear, is_train)
-        for y in range(startyear+1, endyear):
-            yield from _generate_hours(starthour, endhour, 1, 365, endyear, is_train)
-        yield from _generate_hours(starthour, endhour, 1, endday, endyear, is_train)
+  startyear = int(startdate[:4])
+  endyear = int(enddate[:4])
+  startday = int(startdate[5:])
+  endday = int(enddate[5:])
+  if endyear == startyear:
+    yield from _generate_hours(starthour, endhour, startday, endday, startyear, is_train)
+  else:
+    # for startyear, go from startday to day#365
+    # FIXME: leap years?
+    yield from _generate_hours(starthour, endhour, startday, 365, startyear, is_train)
+    for _ in range(startyear+1, endyear):
+      yield from _generate_hours(starthour, endhour, 1, 365, endyear, is_train)
+    yield from _generate_hours(starthour, endhour, 1, endday, endyear, is_train)
 
 def _int64_feature(value):
   """Wrapper for inserting int64 features into Example proto."""
@@ -88,11 +87,7 @@ def _bytes_feature(value):
 def create_training_examples(ref, ltg, ltgfcst, griddef, boxdef, samplingfrac):
   """Input function that yields dicts of CSV, tfrecord for each box in grid."""
   for example in boxdef.rawdata_input_fn(ref, ltg, griddef, ltgfcst):
-    # write out all lightning patches, but only some of the non-lightning ones
-    should_write = (example['has_ltg'] or
-                    random.random() < samplingfrac)
-
-    if should_write:
+    if should_write := (example['has_ltg'] or random.random() < samplingfrac):
       # create a CSV line consisting of extracted features
       csv_data = [
           example['cy'],
@@ -136,8 +131,7 @@ def get_ir_blob_paths(hours_dict, max_per_hour=None):
                                         hours_dict['hour'])
   if max_per_hour and len(blob_paths) > max_per_hour:
     blob_paths = blob_paths[:max_per_hour]
-  for blob_path in blob_paths:
-    yield blob_path
+  yield from blob_paths
 
 
 def add_time_stamp(ir_blob_path):
@@ -160,20 +154,19 @@ def create_record(ir_blob_path, griddef, boxdef, forecast_minutes,
   ltg_blob_paths = goesio.get_ltg_blob_paths(
       irdt, timespan_minutes=ltg_validity_minutes)
   if ltg_blob_paths:
-      ltg = goesio.create_ltg_grid(ltg_blob_paths, griddef, influence_km)
+    ltg = goesio.create_ltg_grid(ltg_blob_paths, griddef, influence_km)
 
-      # create "forecast" lightning image
-      irdt = irdt + datetime.timedelta(minutes=forecast_minutes)
-      ltg_blob_paths = goesio.get_ltg_blob_paths(
-          irdt, timespan_minutes=ltg_validity_minutes)
-      if ltg_blob_paths:
-          ltgfcst = goesio.create_ltg_grid(ltg_blob_paths, griddef, influence_km)
+    # create "forecast" lightning image
+    irdt = irdt + datetime.timedelta(minutes=forecast_minutes)
+    ltg_blob_paths = goesio.get_ltg_blob_paths(
+        irdt, timespan_minutes=ltg_validity_minutes)
+  if ltg_blob_paths:
+    ltgfcst = goesio.create_ltg_grid(ltg_blob_paths, griddef, influence_km)
 
           # create examples
-          for example in create_training_examples(ref, ltg, ltgfcst,
+    yield from create_training_examples(ref, ltg, ltgfcst,
                                                   griddef, boxdef,
-                                                  sampling_frac):
-            yield example
+                                                  sampling_frac)
 
 class MeanStddev(beam.CombineFn):
   def create_accumulator(self):

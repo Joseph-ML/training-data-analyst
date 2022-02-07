@@ -50,7 +50,7 @@ class DataLakeToDataMart:
         """This returns a query against a very large fact table.  We are 
         using a fake orders dataset to simulate a fact table in a typical 
         data warehouse."""
-        orders_query = """SELECT
+        return """SELECT
             acct_number,
             col_number,
             col_number_1,
@@ -204,7 +204,6 @@ class DataLakeToDataMart:
         LIMIT
             10  
         """
-        return orders_query
 
     def add_account_details(self, row, account_details):
         """add_account_details joins two datasets together.  Dataflow passes in the 

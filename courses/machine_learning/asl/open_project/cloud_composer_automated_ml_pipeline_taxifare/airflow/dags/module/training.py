@@ -8,15 +8,15 @@ def training_tasks(model, dag, PROJECT_ID, BUCKET, DATA_DIR, MODEL_NAME, MODEL_V
   # Constants
   # The code package name comes from the model code in the module directory
   REGION = "us-east1"
-  PACKAGE_URI = BUCKET + "/taxifare/code/taxifare-0.1.tar.gz"
-  JOB_DIR = BUCKET + "/jobs"
+  PACKAGE_URI = f'{BUCKET}/taxifare/code/taxifare-0.1.tar.gz'
+  JOB_DIR = f'{BUCKET}/jobs'
 
   # ML Engine training job
   job_id = "taxifare_{}_{}".format(model.replace(".","_"), datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
   train_files = DATA_DIR + "{}/train-*.csv".format(model.replace(".","_"))
   eval_files = DATA_DIR + "{}/eval-*.csv".format(model.replace(".","_"))
   output_dir = BUCKET + "/taxifare/trained_model/{}".format(model.replace(".","_"))
-  job_dir = JOB_DIR + "/" + job_id
+  job_dir = f'{JOB_DIR}/{job_id}'
   training_args = [
     "--job-dir", job_dir,
     "--train_data_paths", train_files,
@@ -56,10 +56,10 @@ def training_tasks(model, dag, PROJECT_ID, BUCKET, DATA_DIR, MODEL_NAME, MODEL_V
     bash_command="gsutil -m rsync -d -r `gsutil ls {0}/export/exporter/ | tail -1` {1}".format(output_dir, MODEL_LOCATION + model.replace(".","_")),
     dag=dag
   )
-  
+
   # Build dependency graph, set_upstream dependencies for all tasks
   bash_remove_old_saved_model_op.set_upstream(ml_engine_training_op)
   bash_copy_new_saved_model_op.set_upstream(bash_remove_old_saved_model_op)
-  
+
   return (ml_engine_training_op,
           bash_copy_new_saved_model_op)

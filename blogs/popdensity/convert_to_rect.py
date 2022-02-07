@@ -62,58 +62,58 @@ def get_next_value(ifp):
 def ascii_to_geojson(
   format, infiles, outfile
 ):
-   print('Creating {} from {} input {}'.format(outfile, format, infiles))
-   with gzip.open(outfile, 'w') as ofp:
-     for infile in infiles:
-       ifp = open(infile)
+  print('Creating {} from {} input {}'.format(outfile, format, infiles))
+  with gzip.open(outfile, 'w') as ofp:
+    for infile in infiles:
+      ifp = open(infile)
 
-       # header
-       if format == 'nasa':
-         ncols = 3600
-         nrows = 1800
-         LATRES = LONRES = 0.1
-         ORIGIN_LAT = 90
-         ORIGIN_LON = -180
-         BADVALUE = 99999.0
-         YEAR = 2000
-       else:
-         ncols = get_next_value(ifp)
-         nrows = get_next_value(ifp)
-         ORIGIN_LON = get_next_value(ifp)
-         yllcorner = get_next_value(ifp)
-         LATRES = LONRES = get_next_value(ifp)
-         BADVALUE = get_next_value(ifp)
-         ORIGIN_LAT = yllcorner + nrows * LATRES
-         YEAR = 2020  # FIXME: parse filename
+      # header
+      if format == 'nasa':
+        ncols = 3600
+        nrows = 1800
+        LATRES = LONRES = 0.1
+        ORIGIN_LAT = 90
+        ORIGIN_LON = -180
+        BADVALUE = 99999.0
+        YEAR = 2000
+      else:
+        ncols = get_next_value(ifp)
+        nrows = get_next_value(ifp)
+        ORIGIN_LON = get_next_value(ifp)
+        yllcorner = get_next_value(ifp)
+        LATRES = LONRES = get_next_value(ifp)
+        BADVALUE = get_next_value(ifp)
+        ORIGIN_LAT = yllcorner + nrows * LATRES
+        YEAR = 2020  # FIXME: parse filename
 
-       # data
-       print('{} from {:.4f},{:.4f} at {}'.format(infile, ORIGIN_LAT, ORIGIN_LON, LATRES), end=' ', flush=True)
-       for rowno, line in enumerate(ifp):
-         print('.', end='', flush=True)
-         if format == 'nasa':
-           linedata = [float(x) for x in line.split(',')]
-         else:
-           linedata = [float(x) for x in line.split()]
-         colno = 0
-         while colno < len(linedata):
-           value = linedata[colno]
-           if value != BADVALUE:
-             # poly, center, colno = create_geo(LATRES, LONRES, ORIGIN_LAT, ORIGIN_LON, rowno, colno, colno+1)
-             poly, center, colno = create_rectangle_geo(LATRES, LONRES, ORIGIN_LAT, ORIGIN_LON, rowno, colno, linedata)
-             pixel = {
-                'year': YEAR,
-                'rowno': rowno,
-                'colno': colno,  # one past the last colno of the rectangle, so not intuitive!
-                'tile': infile,  # SEDAC split over several tiles
-                'location': center,
-                'bounds': poly,
-                'population_density': value
-             }
-             outline = json.dumps(pixel) + '\n'
-             ofp.write(outline.encode('utf-8'))
-           else:
-             colno = colno + 1
-       print('!')
+      # data
+      print('{} from {:.4f},{:.4f} at {}'.format(infile, ORIGIN_LAT, ORIGIN_LON, LATRES), end=' ', flush=True)
+      for rowno, line in enumerate(ifp):
+        print('.', end='', flush=True)
+        if format == 'nasa':
+          linedata = [float(x) for x in line.split(',')]
+        else:
+          linedata = [float(x) for x in line.split()]
+        colno = 0
+        while colno < len(linedata):
+          value = linedata[colno]
+          if value == BADVALUE:
+            colno += 1
+          else:
+            # poly, center, colno = create_geo(LATRES, LONRES, ORIGIN_LAT, ORIGIN_LON, rowno, colno, colno+1)
+            poly, center, colno = create_rectangle_geo(LATRES, LONRES, ORIGIN_LAT, ORIGIN_LON, rowno, colno, linedata)
+            pixel = {
+               'year': YEAR,
+               'rowno': rowno,
+               'colno': colno,  # one past the last colno of the rectangle, so not intuitive!
+               'tile': infile,  # SEDAC split over several tiles
+               'location': center,
+               'bounds': poly,
+               'population_density': value
+            }
+            outline = json.dumps(pixel) + '\n'
+            ofp.write(outline.encode('utf-8'))
+      print('!')
 
 
 if __name__ == '__main__':

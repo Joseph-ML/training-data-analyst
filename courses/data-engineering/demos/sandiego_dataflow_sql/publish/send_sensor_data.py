@@ -43,25 +43,23 @@ def get_timestamp(line):
    return datetime.datetime.strptime(timestamp, TIME_FORMAT)
 
 def convert_csv_to_json(line):
-    # Convert incoming CSV row into expected format for Dataflow SQL
-    line_arr = line.decode('utf-8').split(",")
-    fields = "timestamp,latitude,longitude,freeway_id,freeway_dir,lane,speed".split(",")
-    line_dict = dict(zip(fields,line_arr))
-    line_dict['latitude'] = float(line_dict['latitude'])
-    line_dict['longitude'] = float(line_dict['longitude'])
-    line_dict['freeway_id'] = int(line_dict['freeway_id'])
-    line_dict['lane'] = int(line_dict['lane'])
-    line_dict['speed'] = float(line_dict['speed'])
-    result = json.dumps(line_dict)
-    return result
+   # Convert incoming CSV row into expected format for Dataflow SQL
+   line_arr = line.decode('utf-8').split(",")
+   fields = "timestamp,latitude,longitude,freeway_id,freeway_dir,lane,speed".split(",")
+   line_dict = dict(zip(fields,line_arr))
+   line_dict['latitude'] = float(line_dict['latitude'])
+   line_dict['longitude'] = float(line_dict['longitude'])
+   line_dict['freeway_id'] = int(line_dict['freeway_id'])
+   line_dict['lane'] = int(line_dict['lane'])
+   line_dict['speed'] = float(line_dict['speed'])
+   return json.dumps(line_dict)
 
 def simulate(topic, ifp, firstObsTime, programStart, speedFactor):
    # sleep computation
    def compute_sleep_secs(obs_time):
-        time_elapsed = (datetime.datetime.utcnow() - programStart).seconds
-        sim_time_elapsed = (obs_time - firstObsTime).seconds / speedFactor
-        to_sleep_secs = sim_time_elapsed - time_elapsed
-        return to_sleep_secs
+      time_elapsed = (datetime.datetime.utcnow() - programStart).seconds
+      sim_time_elapsed = (obs_time - firstObsTime).seconds / speedFactor
+      return sim_time_elapsed - time_elapsed
 
    topublish = list()
 

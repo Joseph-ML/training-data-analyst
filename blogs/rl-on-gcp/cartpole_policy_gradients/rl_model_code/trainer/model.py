@@ -122,7 +122,7 @@ def run(outdir, train_mode):
           current_rewards = []
           current_gradients = []
           obs = env.reset()
-          for step in range(n_max_steps):
+          for _ in range(n_max_steps):
             action_val, gradients_val = sess.run(
                 [action, gradients], feed_dict={X: obs.reshape(1, n_inputs)})
             obs, reward, done, info = env.step(action_val[0][0])

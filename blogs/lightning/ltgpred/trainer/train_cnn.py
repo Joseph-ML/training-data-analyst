@@ -95,14 +95,14 @@ def make_preprocess_fn(params):
 
 def engineered_features(img, halfsize):
   with tf.control_dependencies([
-      tf.Assert(tf.is_numeric_tensor(img), [img])
-    ]):
+        tf.Assert(tf.is_numeric_tensor(img), [img])
+      ]):
     qtrsize = halfsize // 2
     ref_smbox = img[:, qtrsize:(qtrsize+halfsize+1), qtrsize:(qtrsize+halfsize+1), 0:1]
     ltg_smbox = img[:, qtrsize:(qtrsize+halfsize+1), qtrsize:(qtrsize+halfsize+1), 1:2]
     ref_bigbox = img[:, :, :, 0:1]
     ltg_bigbox = img[:, :, :, 1:2]
-    engfeat = tf.concat([
+    return tf.concat([
       tf.reduce_max(ref_bigbox, [1, 2]), # [?, 64, 64, 1] -> [?, 1]
       tf.reduce_max(ref_smbox, [1, 2]),
       tf.reduce_mean(ref_bigbox, [1, 2]),
@@ -110,7 +110,6 @@ def engineered_features(img, halfsize):
       tf.reduce_mean(ltg_bigbox, [1, 2]),
       tf.reduce_mean(ltg_smbox, [1, 2])
     ], axis=1)
-    return engfeat
 
 def bias_value(img, halfsize):
     center_ref = img[:, halfsize, halfsize, 0:1] # [?]
@@ -175,14 +174,11 @@ def make_dataset(pattern, mode, batch_size, params):
     if params['transpose']:
       images.set_shape(images.get_shape().merge_with(
           tf.TensorShape([None, None, None, batch_size])))
-      labels.set_shape(labels.get_shape().merge_with(
-          tf.TensorShape([batch_size])))
     else:
       images.set_shape(images.get_shape().merge_with(
           tf.TensorShape([batch_size, None, None, None])))
-      labels.set_shape(labels.get_shape().merge_with(
-          tf.TensorShape([batch_size])))
-
+    labels.set_shape(labels.get_shape().merge_with(
+        tf.TensorShape([batch_size])))
     # keras wants labels to be same shape as logits
     labels = tf.expand_dims(labels, -1)
     return images, labels
@@ -195,8 +191,7 @@ def make_dataset(pattern, mode, batch_size, params):
 
   def fetch_dataset(filename):
     buffer_size = 8 * 1024 * 1024  # 8 MiB per file
-    dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
-    return dataset
+    return tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
 
   dataset = dataset.apply(
     tf.contrib.data.parallel_interleave(

@@ -35,9 +35,7 @@ def main(project_id, instance_id, table_id):
 
   all_cells = []
   for row_key, row in list(partial_rows.rows.items()):
-    for cell in row.cells[b'rollups']['']:
-      all_cells.append(cell)
-
+    all_cells.extend(iter(row.cells[b'rollups']['']))
   last_cell = None
   for cell in all_cells:
     if last_cell and int(last_cell.value) / 2 > int(cell.value):

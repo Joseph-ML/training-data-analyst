@@ -219,8 +219,8 @@ def frame_level_model(features, labels, mode, params):
         y = tf.zeros_like(tensor = top_k_probabilities.values))
     print("frame_level_model: top_k_predictions = {}\n".format(top_k_predictions))
 
-    # 2. Loss function, training/eval ops 
-    if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+    # 2. Loss function, training/eval ops
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
         # Since this is a multi-class, multi-label problem, we will use sigmoid activation and cross entropy loss
         # We already have the probabilities we can use the cross entropy formula directly to calculate the loss
         loss = tf.reduce_mean(input_tensor = -tf.reduce_sum(input_tensor = labels * tf.log(x = average_probabilities_over_frames + 0.00000001), axis = 1))

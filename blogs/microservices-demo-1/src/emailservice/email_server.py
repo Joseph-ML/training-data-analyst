@@ -66,8 +66,7 @@ class BaseEmailService(demo_pb2_grpc.EmailServiceServicer):
 
 class EmailService(BaseEmailService):
   def __init__(self):
-    raise Exception('cloud mail client not implemented')
-    super().__init__()
+      raise Exception('cloud mail client not implemented')
 
   @staticmethod
   def send_email(client, email_address, content):
@@ -122,26 +121,26 @@ class HealthCheck():
       status=health_pb2.HealthCheckResponse.SERVING)
 
 def start(dummy_mode):
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
-                       interceptors=(tracer_interceptor,))
-  service = None
-  if dummy_mode:
-    service = DummyEmailService()
-  else:
-    raise Exception('non-dummy mode not implemented yet')
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
+                         interceptors=(tracer_interceptor,))
+    service = None
+    if dummy_mode:
+      service = DummyEmailService()
+    else:
+      raise Exception('non-dummy mode not implemented yet')
 
-  demo_pb2_grpc.add_EmailServiceServicer_to_server(service, server)
-  health_pb2_grpc.add_HealthServicer_to_server(service, server)
+    demo_pb2_grpc.add_EmailServiceServicer_to_server(service, server)
+    health_pb2_grpc.add_HealthServicer_to_server(service, server)
 
-  port = os.environ.get('PORT', "8080")
-  logger.info("listening on port: "+port)
-  server.add_insecure_port('[::]:'+port)
-  server.start()
-  try:
-    while True:
-      time.sleep(3600)
-  except KeyboardInterrupt:
-    server.stop(0)
+    port = os.environ.get('PORT', "8080")
+    logger.info("listening on port: "+port)
+    server.add_insecure_port(f'[::]:{port}')
+    server.start()
+    try:
+      while True:
+        time.sleep(3600)
+    except KeyboardInterrupt:
+      server.stop(0)
 
 
 if __name__ == '__main__':

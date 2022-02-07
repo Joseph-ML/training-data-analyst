@@ -6,7 +6,6 @@ def compose_shards(data, context):
 
   num_shards = 10
   prefix = 'flights/json/sharded/output'
-  outfile = 'flights/json/flights.json'
   # trigger on the last file only
   filename = data['name']
 
@@ -24,6 +23,7 @@ def compose_shards(data, context):
         # this causes a retry in 60s
         raise ValueError('Shard {} not present'.format(sfile))
       blobs.append(blob)
+    outfile = 'flights/json/flights.json'
     # all shards exist, so compose
     bucket.blob(outfile).compose(blobs)
     logging.info('Successfully created {}'.format(outfile))

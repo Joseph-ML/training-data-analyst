@@ -64,7 +64,10 @@ def test_training(record_xml_attribute, tfjob_name, namespace, trainer_image, nu
 
   # Configurate custom parameters using kustomize
   util.run(['kustomize', 'edit', 'set', 'namespace', namespace], cwd=app_dir)
-  util.run(['kustomize', 'edit', 'set', 'image', 'training-image=' + trainer_image], cwd=app_dir)
+  util.run(
+      ['kustomize', 'edit', 'set', 'image', f'training-image={trainer_image}'],
+      cwd=app_dir,
+  )
 
   util.run(['../base/definition.sh', '--numPs', num_ps], cwd=app_dir)
   util.run(['../base/definition.sh', '--numWorkers', num_workers], cwd=app_dir)
@@ -80,8 +83,17 @@ def test_training(record_xml_attribute, tfjob_name, namespace, trainer_image, nu
 
   configmap = 'mnist-map-training'
   for key, value in trainning_config.items():
-    util.run(['kustomize', 'edit', 'add', 'configmap', configmap,
-            '--from-literal=' + key + '=' + value], cwd=app_dir)
+    util.run(
+        [
+            'kustomize',
+            'edit',
+            'add',
+            'configmap',
+            configmap,
+            f'--from-literal={key}={value}',
+        ],
+        cwd=app_dir,
+    )
 
   # Created the TFJobs.
   util.run(['kustomize', 'build', app_dir, '-o', 'generated.yaml'], cwd=app_dir)
@@ -100,11 +112,8 @@ def test_training(record_xml_attribute, tfjob_name, namespace, trainer_image, nu
         status_callback=tf_job_client.log_status)
   logging.info("Final TFJob:\n %s", json.dumps(results, indent=2))
 
-  # Check for errors creating pods and services. Can potentially
-  # help debug failed test runs.
-  creation_failures = tf_job_client.get_creation_failures_from_tfjob(
-      api_client, namespace, results)
-  if creation_failures:
+  if creation_failures := tf_job_client.get_creation_failures_from_tfjob(
+      api_client, namespace, results):
     logging.warning(creation_failures)
 
   if not tf_job_client.job_succeeded(results):

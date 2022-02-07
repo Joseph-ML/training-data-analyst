@@ -1,7 +1,7 @@
 """Queries for scalable time-series modeling."""
 
 def create_date_range(project, dataset_name, table_name):
-    sql_date_range = """
+    return """
 WITH
   # Get min and max dates so we can enumerate the range next
   CTE_date_limits AS (
@@ -41,9 +41,9 @@ WITH
     DATE_FROM_UNIX_DATE(unix_timescale_end_date) AS timescale_end_date
   FROM
     CTE_start_end_timescale_date_range
-    """.format(project, dataset_name, table_name)
-    
-    return sql_date_range
+    """.format(
+        project, dataset_name, table_name
+    )
 
 def bq_create_rolling_features_label(project, dataset, date_range_table, sales_dataset_table, value_name, downsample_size, window_size, horizon, labels_size=1):
     feature_pivot_list = ["""SUM(CASE WHEN timestep_idx = {time} - 1 THEN {value_name} ELSE 0.0 END) AS price_ago_{time}""".format(time=time,value_name=value_name) for time in range(window_size, 0, -1)]
@@ -53,7 +53,7 @@ def bq_create_rolling_features_label(project, dataset, date_range_table, sales_d
     label_list = ["price_ahead_{time}".format(time=time) for time in range(1, labels_size + 1)]
     new_line = ",\n    "
 
-    sql_bqml_sub_sequences = """
+    return """
 WITH
   # Create sequence date ranges
   CTE_seq_date_ranges AS (
@@ -182,25 +182,25 @@ WITH
     A.seq_unix_start_date + ({window_size} * {downsample_size} - 1) + ({downsample_size} * {horizon}) = B.seq_unix_start_date
   ORDER BY
     A.seq_idx
-    """.format(project=project,
-               dataset=dataset,
-               date_range_table=date_range_table,
-               sales_dataset_table=sales_dataset_table,
-               value_name=value_name,
-               downsample_size=downsample_size,
-               window_size=window_size,
-               horizon=horizon,
-               labels_size=labels_size,
-               feature_pivot_list=new_line.join(feature_pivot_list), 
-               label_pivot_list=new_line.join(label_pivot_list), 
-               feature_list=new_line.join(feature_list), 
-               label_list=new_line.join(label_list))
-
-    return sql_bqml_sub_sequences
+    """.format(
+        project=project,
+        dataset=dataset,
+        date_range_table=date_range_table,
+        sales_dataset_table=sales_dataset_table,
+        value_name=value_name,
+        downsample_size=downsample_size,
+        window_size=window_size,
+        horizon=horizon,
+        labels_size=labels_size,
+        feature_pivot_list=new_line.join(feature_pivot_list),
+        label_pivot_list=new_line.join(label_pivot_list),
+        feature_list=new_line.join(feature_list),
+        label_list=new_line.join(label_list),
+    )
 
 
 def csv_create_rolling_features_label(project, dataset, date_range_table, sales_dataset_table, value_name, downsample_size, window_size, horizon, labels_size=1):
-    sql_csv_sub_sequences = """
+    return """
 WITH
   # Create sequence date ranges
   CTE_seq_date_ranges AS (
@@ -335,14 +335,14 @@ WITH
     A.seq_unix_start_date + ({window_size} * {downsample_size} - 1) + ({downsample_size} * {horizon}) = B.seq_unix_start_date
   ORDER BY
     A.seq_idx
-    """.format(project=project,
-               dataset=dataset,
-               date_range_table=date_range_table,
-               sales_dataset_table=sales_dataset_table,
-               value_name=value_name,
-               downsample_size=downsample_size,
-               window_size=window_size,
-               horizon=horizon,
-               labels_size=labels_size)
-    
-    return sql_csv_sub_sequences
+    """.format(
+        project=project,
+        dataset=dataset,
+        date_range_table=date_range_table,
+        sales_dataset_table=sales_dataset_table,
+        value_name=value_name,
+        downsample_size=downsample_size,
+        window_size=window_size,
+        horizon=horizon,
+        labels_size=labels_size,
+    )

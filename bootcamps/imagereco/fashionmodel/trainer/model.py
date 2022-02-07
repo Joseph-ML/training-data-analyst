@@ -99,12 +99,12 @@ def image_classifier(features, labels, mode, params):
       'dnn':dnn_model,
       'cnn':cnn_model,
       'cnn_batch_norm': cnn_batch_norm_model}
-  model_function = model_functions[params['model']]  
+  model_function = model_functions[params['model']]
   ylogits, nclasses = model_function(features['image'], mode, params)
 
   probabilities = tf.nn.softmax(ylogits)
   classes = tf.cast(tf.argmax(probabilities, 1), tf.uint8)
-  if mode == tf.estimator.ModeKeys.TRAIN or mode == tf.estimator.ModeKeys.EVAL:
+  if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
     loss = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=ylogits, labels=labels))
@@ -124,7 +124,7 @@ def image_classifier(features, labels, mode, params):
     loss = None
     train_op = None
     evalmetrics = None
- 
+
   return tf.estimator.EstimatorSpec(
         mode=mode,
         predictions={"probabilities": probabilities, "classes": classes},

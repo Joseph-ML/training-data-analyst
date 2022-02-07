@@ -25,7 +25,7 @@ import tensorflow.contrib.rnn as rnn
 tf.logging.set_verbosity(tf.logging.INFO)
 
 SEQ_LEN = 10
-DEFAULTS = [[0.0] for x in xrange(0, SEQ_LEN)]
+DEFAULTS = [[0.0] for _ in xrange(0, SEQ_LEN)]
 BATCH_SIZE = 20
 TIMESERIES_COL = 'rawdata'
 N_OUTPUTS = 2  # in each sequence, 1-8 are features, and 9-10 is label
@@ -67,7 +67,7 @@ def simple_rnn(features, targets, mode):
   # 0. Reformat input shape to become a sequence
   x = tf.split(features[TIMESERIES_COL], N_INPUTS, 1)
   #print 'x={}'.format(x)
-    
+
   # 1. configure the RNN
   lstm_cell = rnn.BasicLSTMCell(LSTM_SIZE, forget_bias=1.0)
   outputs, _ = rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
@@ -75,31 +75,31 @@ def simple_rnn(features, targets, mode):
   # slice to keep only the last cell of the RNN
   outputs = outputs[-1]
   #print 'last outputs={}'.format(outputs)
-  
+
   # output is result of linear activation of last layer of RNN
   weight = tf.Variable(tf.random_normal([LSTM_SIZE, N_OUTPUTS]))
   bias = tf.Variable(tf.random_normal([N_OUTPUTS]))
   predictions = tf.matmul(outputs, weight) + bias
-    
+
   # 2. loss function, training/eval ops
-  if mode == tf.contrib.learn.ModeKeys.TRAIN or mode == tf.contrib.learn.ModeKeys.EVAL:
-     loss = tf.losses.mean_squared_error(targets, predictions)
-     train_op = tf.contrib.layers.optimize_loss(
-         loss=loss,
-         global_step=tf.contrib.framework.get_global_step(),
-         learning_rate=0.01,
-         optimizer="SGD")
-     eval_metric_ops = {
-      "rmse": tf.metrics.root_mean_squared_error(targets, predictions)
-     }
+  if mode in [tf.contrib.learn.ModeKeys.TRAIN, tf.contrib.learn.ModeKeys.EVAL]:
+    loss = tf.losses.mean_squared_error(targets, predictions)
+    train_op = tf.contrib.layers.optimize_loss(
+        loss=loss,
+        global_step=tf.contrib.framework.get_global_step(),
+        learning_rate=0.01,
+        optimizer="SGD")
+    eval_metric_ops = {
+     "rmse": tf.metrics.root_mean_squared_error(targets, predictions)
+    }
   else:
-     loss = None
-     train_op = None
-     eval_metric_ops = None
-  
+    loss = None
+    train_op = None
+    eval_metric_ops = None
+
   # 3. Create predictions
   predictions_dict = {"predicted": predictions}
-  
+
   # 4. return ModelFnOps
   return tflearn.ModelFnOps(
       mode=mode,
